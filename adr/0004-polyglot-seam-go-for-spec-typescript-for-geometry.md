@@ -1,6 +1,6 @@
 # 4. Go for the spec, TypeScript for geometry, split at validated JSON
 
-- Status: accepted
+- Status: superseded by [ADR 0007](0007-go-only-pregenerated-svg.md)
 - Deciders: Joey Stout
 - Date: 2026-08-10
 
