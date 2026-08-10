@@ -1,0 +1,130 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* Dracula. Mobile first: everything below is single-column until it needs not to be. */
+:root {
+  --bg: #282a36; --alt: #21222c; --fg: #f8f8f2; --muted: #6272a4;
+  --pink: #ff79c6; --cyan: #8be9fd; --green: #50fa7b; --orange: #ffb86c;
+  --red: #ff5555; --purple: #bd93f9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 1.25rem 1rem 4rem;
+  background: var(--bg); color: var(--fg);
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+main { max-width: 46rem; margin: 0 auto; }
+a { color: var(--cyan); }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.05rem; color: var(--purple); margin: 2rem 0 .75rem;
+     text-transform: uppercase; letter-spacing: .08em; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: .82em; color: var(--muted); }
+
+.crumb, .tagline, .aliases { color: var(--muted); margin: .2rem 0; font-size: .9rem; }
+
+/* Cards */
+.cards { list-style: none; padding: 0; margin: 0; display: grid; gap: .6rem; }
+.cards a {
+  display: grid; gap: .15rem; padding: .85rem 1rem; text-decoration: none;
+  background: var(--alt); border-radius: .6rem; border: 1px solid #ffffff12;
+}
+.cards a:hover { border-color: var(--purple); }
+.card-title { color: var(--fg); font-weight: 600; }
+.card-meta { color: var(--muted); font-size: .85rem; }
+.card-status { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; }
+.warn { color: var(--red); font-weight: 700; }
+
+.v-unvalidated { color: var(--orange); }
+.v-field-tested { color: var(--green); }
+
+/* Caution */
+.caution { margin: 1.25rem 0; padding: .9rem 1rem; border-radius: .6rem;
+            background: #ff555514; border-left: 3px solid var(--red); }
+.caution strong { color: var(--red); display: block; margin-bottom: .3rem; }
+.caution p { margin: 0; font-size: .93rem; }
+
+/* Stepper. Radios carry the state so this works with scripting off. */
+.stepper input[type=radio] { position: absolute; opacity: 0; pointer-events: none; }
+.frame {
+  background: var(--bg); border: 1px solid #ffffff14; border-radius: .75rem;
+  padding: .5rem; margin-top: 1rem;
+}
+.stage { display: none; }
+.stage svg { display: block; width: 100%; height: auto; }
+#s1:checked ~ .frame .stage[data-stage="1"],
+#s2:checked ~ .frame .stage[data-stage="2"],
+#s3:checked ~ .frame .stage[data-stage="3"],
+#s4:checked ~ .frame .stage[data-stage="4"],
+#s5:checked ~ .frame .stage[data-stage="5"],
+#s6:checked ~ .frame .stage[data-stage="6"],
+#s7:checked ~ .frame .stage[data-stage="7"],
+#s8:checked ~ .frame .stage[data-stage="8"],
+#s9:checked ~ .frame .stage[data-stage="9"],
+#s10:checked ~ .frame .stage[data-stage="10"],
+#s11:checked ~ .frame .stage[data-stage="11"],
+#s12:checked ~ .frame .stage[data-stage="12"] { display: block; }
+
+.controls { display: flex; align-items: center; gap: .75rem; margin: .85rem 0 0; }
+.ticks { list-style: none; display: flex; gap: .4rem; padding: 0; margin: 0 auto; }
+.ticks label {
+  display: grid; place-items: center; width: 2rem; height: 2rem; cursor: pointer;
+  border-radius: 50%; background: var(--alt); color: var(--muted);
+  border: 1px solid #ffffff12; font-size: .85rem; user-select: none;
+}
+.ticks label:hover { color: var(--fg); }
+#s1:checked ~ .controls .ticks li:nth-child(1) label,
+#s2:checked ~ .controls .ticks li:nth-child(2) label,
+#s3:checked ~ .controls .ticks li:nth-child(3) label,
+#s4:checked ~ .controls .ticks li:nth-child(4) label,
+#s5:checked ~ .controls .ticks li:nth-child(5) label,
+#s6:checked ~ .controls .ticks li:nth-child(6) label,
+#s7:checked ~ .controls .ticks li:nth-child(7) label,
+#s8:checked ~ .controls .ticks li:nth-child(8) label,
+#s9:checked ~ .controls .ticks li:nth-child(9) label,
+#s10:checked ~ .controls .ticks li:nth-child(10) label,
+#s11:checked ~ .controls .ticks li:nth-child(11) label,
+#s12:checked ~ .controls .ticks li:nth-child(12) label { background: var(--purple); color: var(--bg); font-weight: 700; border-color: var(--purple); }
+.step-btn {
+  display: grid; place-items: center; width: 2.4rem; height: 2.4rem; cursor: pointer;
+  border-radius: .5rem; background: var(--alt); border: 1px solid #ffffff12;
+  color: var(--fg); user-select: none;
+}
+.step-btn:hover { border-color: var(--purple); }
+
+.prose { margin-top: 1rem; min-height: 4.5rem; }
+.stage-prose { display: none; margin: 0; }
+#s1:checked ~ .prose .stage-prose[data-stage="1"],
+#s2:checked ~ .prose .stage-prose[data-stage="2"],
+#s3:checked ~ .prose .stage-prose[data-stage="3"],
+#s4:checked ~ .prose .stage-prose[data-stage="4"],
+#s5:checked ~ .prose .stage-prose[data-stage="5"],
+#s6:checked ~ .prose .stage-prose[data-stage="6"],
+#s7:checked ~ .prose .stage-prose[data-stage="7"],
+#s8:checked ~ .prose .stage-prose[data-stage="8"],
+#s9:checked ~ .prose .stage-prose[data-stage="9"],
+#s10:checked ~ .prose .stage-prose[data-stage="10"],
+#s11:checked ~ .prose .stage-prose[data-stage="11"],
+#s12:checked ~ .prose .stage-prose[data-stage="12"] { display: block; }
+.stage-prose .n {
+  display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem;
+  margin-right: .5rem; border-radius: 50%; background: var(--purple);
+  color: var(--bg); font-size: .8rem; font-weight: 700; vertical-align: 1px;
+}
+.stage-prose code { display: block; margin: .5rem 0 0 2rem; }
+
+.legend { color: var(--muted); font-size: .82rem; display: flex; gap: 1rem; align-items: center; }
+.swatch { width: .8rem; height: .8rem; border-radius: 50%; background: var(--c);
+           display: inline-block; margin-right: .35rem; vertical-align: -1px; }
+
+/* Record footer */
+.record { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid #ffffff14; }
+.record dl { display: grid; grid-template-columns: 7rem 1fr; gap: .3rem 1rem; margin: 0; font-size: .88rem; }
+.record dt { color: var(--muted); }
+.record dd { margin: 0; }
+.disclaimer, .site-foot p { color: var(--muted); font-size: .82rem; margin-top: 1.25rem; }
+ul li { margin: .3rem 0; }
+
+@media (min-width: 40rem) {
+  body { padding: 2.5rem 1.5rem 5rem; }
+  h1 { font-size: 2rem; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+}

@@ -1,7 +1,7 @@
 CUE   := cue
 KINDS := Component Line Knot Rigging Rig Source
 
-.PHONY: check validate conformance rules schema fmt
+.PHONY: check validate conformance rules schema site serve fmt
 
 ## Shape, enums and grammar, for the whole dataset in one pass.
 ## The validate package keys every record by its own id, so records collide
@@ -36,6 +36,13 @@ schema:
 	  $(CUE) def ./cue/ --out jsonschema -e "#$$k" > "schema/$$(echo $$k | tr A-Z a-z).json" || exit 1; \
 	done
 	@echo "$(words $(KINDS)) schemas written to schema/"
+
+## Build the static site. Records in, HTML and SVG out, nothing runs after.
+site:
+	@go run ./cmd/site
+
+serve: site
+	@echo "http://localhost:8080"; cd site && python3 -m http.server 8080
 
 fmt:
 	@$(CUE) fmt ./cue/ ./validate/

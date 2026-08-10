@@ -95,6 +95,39 @@ type Edge struct {
 	Travel  *Travel `yaml:"travel"`
 }
 
+type Point [2]float64
+
+// Segment is a run of cord between crossings. Paint order lives here rather
+// than on the cord because a square knot alternates over and under.
+type Segment struct {
+	Cord   string  `yaml:"cord"`
+	Z      int     `yaml:"z"`
+	Points []Point `yaml:"points"`
+}
+
+type StageGeometry struct {
+	Stage    int       `yaml:"stage"`
+	Segments []Segment `yaml:"segments"`
+}
+
+type Geometry struct {
+	Width  float64         `yaml:"width"`
+	Height float64         `yaml:"height"`
+	Cords  []string        `yaml:"cords"`
+	Stages []StageGeometry `yaml:"stages"`
+}
+
+type Action struct {
+	Verb string `yaml:"verb"`
+}
+
+type Stage struct {
+	ID       int      `yaml:"id"`
+	Prose    string   `yaml:"prose"`
+	Notation string   `yaml:"notation"`
+	Actions  []Action `yaml:"actions"`
+}
+
 type Validation struct {
 	Status string `yaml:"status"`
 }
@@ -123,8 +156,14 @@ type Record struct {
 	Strength  *Strength  `yaml:"strength"`
 	Diameters []Diameter `yaml:"diameters"`
 
+	Stages   []Stage   `yaml:"stages"`
+	Geometry *Geometry `yaml:"geometry"`
+
 	Nodes []Node `yaml:"nodes"`
 	Edges []Edge `yaml:"edges"`
+
+	LineTypes    []string `yaml:"line_types"`
+	FailureModes []string `yaml:"failure_modes"`
 
 	Path string `yaml:"-"`
 }

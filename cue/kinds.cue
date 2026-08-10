@@ -119,6 +119,7 @@ package riggermortis
 	strength?: claims: [...#StrengthClaim]
 	cautions?: [...#Caution]
 	failure_modes?: [...string]
+	geometry?: #Geometry
 }
 
 #Rigging: {

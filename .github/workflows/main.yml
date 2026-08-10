@@ -18,6 +18,8 @@ jobs:
         run: go install cuelang.org/go/cmd/cue@v0.17.1
       - run: make check
       - run: go run ./cmd/rig
+      - name: Site builds
+        run: make site
 
   report:
     name: dataset report

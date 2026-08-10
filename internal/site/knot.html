@@ -1,0 +1,68 @@
+{{define "knot"}}
+<article class="knot-page">
+  <header>
+    <p class="crumb"><a href="../index.html">riggermortis</a> / knots</p>
+    <h1>{{.Names.Canonical}}</h1>
+    {{with .Names.Aliases}}<p class="aliases">also called {{range $i, $a := .}}{{if $i}}, {{end}}{{$a}}{{end}}</p>{{end}}
+  </header>
+
+  {{range .Cautions}}
+  <aside class="caution caution-{{.Severity}}">
+    <strong>{{if eq .Severity "do-not-use"}}Do not use this knot for this{{else}}Caution{{end}}</strong>
+    <p>{{.Note}}</p>
+  </aside>
+  {{end}}
+
+  {{if .Geometry}}
+  <section class="stepper">
+    <!-- Radio inputs rather than script: the steps work with JavaScript off. -->
+    {{range $i, $s := .Steps}}
+    <input type="radio" name="stage" id="s{{$s.N}}" value="{{$s.N}}"{{if eq $i 0}} checked{{end}}>
+    {{end}}
+
+    <div class="frame">
+      {{range .Steps}}<div class="stage" data-stage="{{.N}}">{{.SVG}}</div>{{end}}
+    </div>
+
+    <div class="controls">
+      <label class="step-btn" id="prev-btn">&larr;</label>
+      <ol class="ticks">
+        {{range .Steps}}<li><label for="s{{.N}}" title="stage {{.N}}">{{.N}}</label></li>{{end}}
+      </ol>
+      <label class="step-btn" id="next-btn">&rarr;</label>
+    </div>
+
+    <div class="prose">
+      {{range .Steps}}
+      <p class="stage-prose" data-stage="{{.N}}">
+        <span class="n">{{.N}}</span>{{.Prose}}
+        {{with .Notation}}<code>{{.}}</code>{{end}}
+      </p>
+      {{end}}
+    </div>
+
+    <p class="legend">
+      {{range .Cords}}<span class="swatch" style="--c:{{.Colour}}"></span>cord {{.Name}}{{end}}
+    </p>
+  </section>
+  {{end}}
+
+  {{with .FailureModes}}
+  <section>
+    <h2>How it goes wrong</h2>
+    <ul>{{range .}}<li>{{.}}</li>{{end}}</ul>
+  </section>
+  {{end}}
+
+  <footer class="record">
+    <dl>
+      <dt>Validation</dt><dd class="v-{{.Validation.Status}}">{{.Validation.Status}}</dd>
+      <dt>Role</dt><dd>{{.Role}}</dd>
+      <dt>Suits</dt><dd>{{if .LineTypes}}{{range $i, $l := .LineTypes}}{{if $i}}, {{end}}{{$l}}{{end}}{{else}}nothing listed{{end}}</dd>
+    </dl>
+    <p class="disclaimer">
+      Geometry on this page is hand-authored and unconfirmed. The renderer is real; the coordinates are a placeholder until a solver derives them from the tying actions.
+    </p>
+  </footer>
+</article>
+{{end}}

@@ -1,0 +1,25 @@
+{{define "index"}}
+<header class="home">
+  <h1>riggermortis</h1>
+  <p class="tagline">Every way to rig it. Generated from data, not drawn by hand.</p>
+</header>
+
+<section>
+  <h2>Knots</h2>
+  <ul class="cards">
+    {{range .}}
+    <li>
+      <a href="{{.Href}}">
+        <span class="card-title">{{.Title}}{{if .Caution}} <span class="warn" title="documented as do-not-use">!</span>{{end}}</span>
+        <span class="card-meta">{{.Role}} &middot; {{if .Steps}}{{.Steps}} steps{{else}}no steps yet{{end}}</span>
+        <span class="card-status v-{{.Status}}">{{.Status}}</span>
+      </a>
+    </li>
+    {{end}}
+  </ul>
+</section>
+
+<footer class="site-foot">
+  <p>Nothing on this site has been confirmed by a human who fishes. Every record is structurally valid and unverified.</p>
+</footer>
+{{end}}

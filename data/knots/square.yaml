@@ -87,6 +87,80 @@ failure_modes:
   - Tied with both crossings the same handedness it becomes a granny knot, which slips sooner and jams when it does not.
   - Cannot be trusted to hold at all in braid, which is slicker again than fluorocarbon.
 
+# Hand-authored, not solved. The renderer is real; these coordinates are a
+# placeholder until a solver derives them from the stages above.
+geometry:
+  width: 480
+  height: 280
+  cords: [a, b]
+  stages:
+    # Cross left over right. One crossing, a on top.
+    - stage: 1
+      segments:
+        - cord: b
+          z: 0
+          points: [[460, 90], [380, 96], [300, 116], [240, 140], [180, 164], [100, 184], [20, 190]]
+        - cord: a
+          z: 1
+          points: [[20, 90], [100, 96], [180, 116], [240, 140], [300, 164], [380, 184], [460, 190]]
+
+    # Tuck under: the first half knot. The ends have swapped sides.
+    - stage: 2
+      segments:
+        - cord: b
+          z: 0
+          points: [[460, 80], [380, 88], [300, 112], [250, 140], [210, 172], [130, 192], [20, 196]]
+        - cord: a
+          z: 1
+          points: [[20, 84], [110, 92], [190, 116], [240, 148], [270, 184], [350, 200], [460, 200]]
+
+    # Cross again the OTHER way. b is over here, and that flip is the entire
+    # difference between a square knot and a granny.
+    - stage: 3
+      segments:
+        - cord: a
+          z: 0
+          points: [[20, 84], [110, 92], [190, 116], [240, 148], [268, 178]]
+        - cord: b
+          z: 1
+          points: [[460, 80], [380, 88], [300, 112], [250, 140], [210, 172], [130, 192], [20, 196]]
+        - cord: a
+          z: 2
+          points: [[268, 178], [300, 196], [360, 208], [460, 210]]
+
+    # Both tucks done. Four crossings, alternating over and under.
+    - stage: 4
+      segments:
+        - cord: a
+          z: 3
+          points: [[20, 96], [110, 100], [180, 116], [226, 142]]
+        - cord: b
+          z: 2
+          points: [[460, 96], [370, 100], [300, 116], [254, 142], [226, 172], [180, 186]]
+        - cord: a
+          z: 1
+          points: [[226, 142], [254, 172], [300, 186], [370, 196], [460, 198]]
+        - cord: b
+          z: 0
+          points: [[180, 186], [110, 196], [20, 198]]
+
+    # Drawn tight. Two bights passing through each other, which is what a
+    # square knot is once it is seated.
+    - stage: 5
+      segments:
+        - cord: a
+          z: 3
+          points: [[20, 108], [120, 112], [200, 122], [252, 140]]
+        - cord: b
+          z: 2
+          points: [[460, 108], [360, 112], [280, 122], [228, 140], [206, 158], [228, 176]]
+        - cord: a
+          z: 1
+          points: [[252, 140], [274, 158], [252, 176], [200, 186], [120, 194], [20, 198]]
+        - cord: b
+          z: 0
+          points: [[228, 176], [280, 186], [360, 194], [460, 198]]
+
 validation:
   status: unvalidated
   events: []

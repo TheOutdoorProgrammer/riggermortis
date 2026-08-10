@@ -8,3 +8,5 @@ build/
 .venv/
 __pycache__/
 /rig
+/site/
+/schema/*.json.tmp
