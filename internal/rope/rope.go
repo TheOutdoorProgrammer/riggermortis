@@ -245,7 +245,7 @@ func Project(cords []Cord, w, h float64) []spec.Segment {
 			if k == len(order) || order[k] != order[start] {
 				// Overlap generously: adjacent pieces must share enough length
 				// that no seam is visible where paint order changes.
-				const lap = 3
+				const lap = 4
 				lo, hi := start-lap, k+lap
 				if lo < 0 {
 					lo = 0
@@ -253,9 +253,20 @@ func Project(cords []Cord, w, h float64) []spec.Segment {
 				if hi > len(pts[ci]) {
 					hi = len(pts[ci])
 				}
-				out = append(out, spec.Segment{
-					Cord: c.ID, Z: order[start], Points: pts[ci][lo:hi],
-				})
+				for hi-lo < 3 {
+					if lo > 0 {
+						lo--
+					} else if hi < len(pts[ci]) {
+						hi++
+					} else {
+						break
+					}
+				}
+				if hi-lo >= 2 {
+					out = append(out, spec.Segment{
+						Cord: c.ID, Z: order[start], Points: pts[ci][lo:hi],
+					})
+				}
 				start = k
 			}
 		}

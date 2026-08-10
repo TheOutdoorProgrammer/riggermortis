@@ -155,13 +155,20 @@ func Geometry(r *spec.Record) *spec.Geometry {
 
 		l := rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
 			Tail: 150, Flare: 40, Stub: 60}
+		cords := rope.Build(l)
+
+		// Every stage settles a little so the cord hangs rather than tracing a
+		// perfect helix. The stage that pulls settles hard, and that is where a
+		// reef lying flat and a granny cocking over become visibly different.
+		settle := rope.Settle{Iterations: 40, Diameter: 30, Tension: 0.12, Stiffness: 0.16}
 		if k.Tighten > 0 && stage >= k.Tighten {
-			// Seating pulls the turns together and shrinks the rope's throw.
-			l.Radius, l.Pitch, l.Flare = 19, 54, 26
+			settle = rope.Settle{Iterations: 160, Diameter: 30, Tension: 0.55, Stiffness: 0.18}
 		}
+		rope.Relax(cords, settle)
+
 		g.Stages = append(g.Stages, spec.StageGeometry{
 			Stage:    stage,
-			Segments: rope.Project(rope.Build(l), width, height),
+			Segments: rope.Project(cords, width, height),
 		})
 	}
 	return g
