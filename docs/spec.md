@@ -113,7 +113,7 @@ Nothing mechanical catches that, so it is a review responsibility and rule 22 st
 
 ### Common fields
 
-Five fields exist on every kind and are not repeated in each kind's table.
+These fields exist on every kind and are not repeated in each kind's table.
 
 | Field | Required | Meaning |
 | --- | --- | --- |
