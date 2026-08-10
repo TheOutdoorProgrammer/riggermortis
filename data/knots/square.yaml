@@ -7,9 +7,8 @@ names:
   canonical: Square knot
   aliases: [reef knot, Hercules knot]
 
-# UNVERIFIED. The reef knot has an Ashley number and it is not asserted here
-# from memory. Fill in only from the book itself, and cite nothing else for it.
-abok_ref: null
+# No Ashley number asserted. Adding one needs the book, not recall.
+refs: []
 
 role: bend
 

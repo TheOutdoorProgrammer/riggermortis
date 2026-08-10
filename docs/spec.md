@@ -111,6 +111,63 @@ Three carve-outs, stated explicitly so they do not read as leaks:
 Free-text fields such as `name`, `notes`, `prose` and `cadence` can still smuggle a brand in.
 Nothing mechanical catches that, so it is a review responsibility and rule 22 states it.
 
+### Common fields
+
+Five fields exist on every kind and are not repeated in each kind's table.
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `kind` | yes | The record type. |
+| `id` | yes | `{category}.{name}`, per the grammar above. |
+| `schema_version` | yes | Which version of this spec the record targets. |
+| `validation` | yes | How it was checked. |
+| `former_ids` | no | Previous IDs, for reference migration. |
+| `refs` | no | External identifiers. See below. |
+
+### `refs`, external identifiers
+
+An earlier draft carried `abok_ref` on knots.
+That is a field per catalogue waiting to happen, and `wikidata_ref`, `gbif_ref` and `agrovoc_ref` would have followed it.
+
+One generic list instead, on every kind:
+
+```yaml
+refs:
+  - {system: abok, id: "1204", source: src.abok-general}
+  - {system: wikidata, id: "Q207754"}
+```
+
+**An identifier is not a citation**, and the two do not collapse into each other.
+`sources` says *this claim came from there*.
+`refs` says *this same thing is called that elsewhere*.
+Wikidata keeps them apart for the same reason and so do we.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `system` | `ref_system` | yes | Which catalogue. Registered below. |
+| `id` | **string** | yes | Always a string, never a number. Catalogue identifiers carry leading zeros, prefixes such as `Q207754`, and full URIs. |
+| `source` | ref | conditional | Required when the system is not resolvable, since nothing can check it automatically. |
+| `rank` | `rank` | no | A ref later found wrong is demoted, not deleted, exactly like any other claim. |
+
+An unknown identifier is **omitted**, never guessed.
+`null` was doing that job on `abok_ref` and an absent entry says the same thing without occupying a field.
+
+### The `ref_system` registry
+
+A **resolvable** system can be fetched and checked, so its identifiers are Tier B and machine-verifiable: resolve it, confirm the record exists, confirm its label matches. A print-only system is Tier C and needs a human with the book.
+
+| System | Identifies | Resolvable | Notes |
+| --- | --- | --- | --- |
+| `abok` | Knots, by Ashley number | No | Print only. The **number** may be cited; text and illustrations may never be reproduced, since the book is in copyright until 2040. |
+| `wikidata` | Anything, by Q-id | Yes | |
+| `gbif` | Species, by usage key | Yes | |
+| `itis` | Species, by TSN | Yes | |
+| `worms` | Marine species, by AphiaID | Yes | |
+| `fao-isscfg` | Fishing gear types | Yes | Records the link and nothing more. All recreational angling is the single leaf `25.0.0`, so it cannot describe a rig. |
+| `agrovoc` | Vocabulary concepts, by URI | Yes | Tackle coverage is two concepts total, `fishing lines` and `hooks`. Almost nothing here will have one. |
+
+The URL template belongs to the system, not the record, so a record stores the bare identifier and the renderer builds the link.
+
 ### Units
 
 **No physical quantity is ever a bare number.**
@@ -223,6 +280,7 @@ This section is the source of truth from which the JSON Schema is generated, so 
 | `pattern_target` | `rig`, `knot` |
 | `pin_type` | `closed-eye`, `open-eye`, `split-ring`, `shank`, `snap`, `arm-socket`, `line-end`, `in`, `out`, `loop` |
 | `severity` | `error`, `warning`, `info` |
+| `ref_system` | `abok`, `wikidata`, `gbif`, `itis`, `worms`, `fao-isscfg`, `agrovoc` |
 
 ### Evidence
 
@@ -483,7 +541,7 @@ role: terminal
 names:
   canonical: Palomar knot
   aliases: [Palomar]
-abok_ref: null
+refs: []
 connects:
   from: line-end
   to: [closed-eye, split-ring]
@@ -526,7 +584,6 @@ validation: {status: unvalidated, events: []}
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `role` | `knot_role` | yes | Determines whether the knot is an edge or a node. |
-| `abok_ref` | int | no | Ashley Book of Knots reference number. The **number** may be cited; text and figures may not be reproduced, as ABoK is in copyright until 2040. |
 | `connects.to` | list of `pin_type` | conditional | Absent for `loop` and `stopper` roles, which terminate on nothing. |
 | `line_types` | list of `line_material` | yes | Mismatch is a warning, not an error, because it is a judgement. |
 | `objects` | list | no | Suber user-extension nouns bound to the pin type they stand for. `HookEye.1` is what lets one knot record be reused against any component exposing a `closed-eye`. |
@@ -1088,6 +1145,9 @@ notes: >
 | 38 | A `rigging` address must resolve to a declared landmark or a position in `[0, 1]` | error | A |
 | 39 | A `do-not-use` caution requires at least one source | error | A |
 | 40 | Records referencing `src.needs-citation` are counted and reported as outstanding citation debt | warning | B |
+| 41 | A `refs` entry on a non-resolvable system requires a `source` | error | A |
+| 42 | A `refs` `id` is always a string, never a bare number | error | A |
+| 43 | A `refs` entry on a resolvable system is fetched and its label checked against the record's canonical name | warning | B |
 | 34 | Quantity values must fall in a plausible range for their unit, catching unconverted imperial figures entered by mistake | warning | B |
 | 23 | Nothing publishes with `validation.status: unvalidated` | warning | B |
 | 24 | Patterns expand before rules 1 to 5 run, so a pattern can never hide a structural error | error | A |

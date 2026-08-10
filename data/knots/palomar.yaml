@@ -7,7 +7,7 @@ names:
   canonical: Palomar knot
   aliases: [Palomar]
 
-abok_ref: null
+refs: []
 
 role: terminal
 
