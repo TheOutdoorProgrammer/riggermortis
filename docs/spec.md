@@ -100,6 +100,7 @@ Three carve-outs, stated explicitly so they do not read as leaks:
 1. **Sources name their authors.** A citation that concealed its publisher would not be a citation. `reliability` may even turn on it, since a maker documenting their own product is a strong source.
 2. **Aliases may record a trademarked common name.** Recording that some people say "Alabama Rig" is how a search for that term reaches the generic umbrella rig entry. It is never the canonical name, and it always carries a `trademark_note`. Naming a mark in order to avoid using it is the opposite of vendor specificity.
 3. **`validation_method: manufacturer-confirmed`** describes where evidence came from, not what to buy.
+4. **A knot's established name is its name, even when a brand is inside it.** The Berkley braid knot and the Rapala knot have no generic equivalents in use, exactly as the Albright special carries a person's name. Renaming them would make the spec less usable and no more neutral. The line is that a *name* identifies a procedure, while a *specification* prescribes a purchase, and only the second is forbidden.
 
 Free-text fields such as `name`, `notes`, `prose` and `cadence` can still smuggle a brand in.
 Nothing mechanical catches that, so it is a review responsibility and rule 22 states it.
