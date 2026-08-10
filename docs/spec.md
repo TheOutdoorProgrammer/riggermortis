@@ -26,6 +26,7 @@ Fields that exist only so a validator can reason are marked **validator-only** a
 | `component` | A physical thing you can hold, buy, and attach | `data/components/` | many, see below |
 | `line` | A cord material, and its diameter per stated strength | `data/lines/` | `line` |
 | `knot` | A procedure for tying, expressed as stages | `data/knots/` | `knot` |
+| `rigging` | A procedure for mounting a soft body on a hook | `data/riggings/` | `rigging` |
 | `rig` | A graph of components, lines, and knots | `data/rigs/` | `rig` |
 | `pattern` | A named, parameterised fragment instantiated many times | `data/patterns/` | `pattern` |
 | `technique` | How a rig is fished, and the conditions it suits | `data/techniques/` | `technique` |
@@ -217,8 +218,8 @@ This section is the source of truth from which the JSON Schema is generated, so 
 
 | Enum | Values |
 | --- | --- |
-| `kind` | `component`, `line`, `knot`, `rig`, `pattern`, `technique`, `species`, `source` |
-| `id_category` | **components:** `hook`, `weight`, `swivel`, `snap`, `split-ring`, `bead`, `float`, `stop`, `blade`, `skirt`, `jighead`, `bait`, `lure`, `hardware`, `sleeve` · **others:** `line`, `knot`, `rig`, `pattern`, `technique`, `species`, `src` |
+| `kind` | `component`, `line`, `knot`, `rigging`, `rig`, `pattern`, `technique`, `species`, `source` |
+| `id_category` | **components:** `hook`, `weight`, `swivel`, `snap`, `split-ring`, `bead`, `float`, `stop`, `blade`, `skirt`, `jighead`, `bait`, `lure`, `hardware`, `sleeve` · **others:** `line`, `knot`, `rigging`, `rig`, `pattern`, `technique`, `species`, `src` |
 | `pattern_target` | `rig`, `knot` |
 | `pin_type` | `closed-eye`, `open-eye`, `split-ring`, `shank`, `snap`, `arm-socket`, `line-end`, `in`, `out`, `loop` |
 | `severity` | `error`, `warning`, `info` |
@@ -246,7 +247,10 @@ This section is the source of truth from which the JSON Schema is generated, so 
 | `variant_axis` | `mass_g`, `gap_mm`, `diameter_mm`, `rating_kg`, `breaking_load_kg`, `length_mm`, `supports_g` |
 | `point_style` | `straight`, `turned-in`, `turned-out`, `knife-edge`, `needle` |
 | `shank` | `short`, `standard`, `long`, `extra-long` |
-| `bend_style` | `round`, `octopus`, `circle`, `worm`, `ewg`, `kahle`, `aberdeen`, `siwash`, `treble` |
+| `bend_style` | `round`, `octopus`, `circle`, `worm`, `ewg`, `offset-worm`, `straight-shank`, `kahle`, `aberdeen`, `siwash`, `treble` |
+| `body_profile` | `straight`, `curly-tail`, `paddle-tail`, `creature`, `craw`, `fluke`, `tube`, `grub`, `worm-live`, `baitfish`, `cut` |
+| `landmark_surface` | `nose`, `back`, `belly`, `side`, `tail` |
+| `rig_verb` | **provisional**: `IN` insert, `OUT` exit, `SL` slide, `RO` rotate, `AL` align, `BU` bury, `TH` thread |
 | `line_material` | `mono`, `fluoro`, `braid`, `wire`, `backing`, `leader-mono`, `leader-fluoro` |
 | `stretch` | `low`, `medium`, `high` |
 | `density` | `sinking`, `neutral`, `floating` |
@@ -526,6 +530,127 @@ validation: {status: unvalidated, events: []}
 | `strength.claims[].n` | int | yes | Sample size. **Required.** Most published knot tests are n=1. |
 | `strength.claims[].tier` | `tier` | yes | Always `C`. |
 | `strength.claims[].rank` | `rank` | yes | |
+
+---
+
+## `rigging`
+
+**What it is.** A procedure for mounting a soft body on a hook.
+
+**What belongs here.** Soft plastic presentations such as Texposed, exposed Texas, wacky, Neko, nose-hooked, threaded on a jighead, and screw-lock. Live and cut bait hooking is the same class of problem: lip-hooked, dorsal-hooked, and bridle-rigged are procedures with a spatial outcome, not attributes.
+
+**What does not.** Hard lures, which arrive with hooks attached and are single components. Anything about how the finished rig is *fished*, which is a `technique`.
+
+### Why this is a kind and not a field
+
+An earlier draft carried `rel: rigged, style: texposed` on a rig edge and listed "does bait onto hook belong in the graph at all" as an open question.
+
+It does, and the reason is that **rigging a soft plastic is structurally the same problem as tying a knot**:
+
+- an ordered sequence of actions,
+- performed on a flexible body,
+- producing a specific spatial relationship,
+- which fails in a specific way when done wrong (a bait rigged crooked spins and twists line, exactly as a badly dressed knot slips),
+- and which a static image cannot teach.
+
+So `knot` and `rigging` are two instances of one shared shape, a **staged procedure**: ordered stages, each holding simultaneous actions, each stage a keyframe.
+The two kinds differ only in vocabulary, so the animation player is written once and driven by both.
+
+In CUE this is a shared definition both kinds embed, not duplicated structure.
+
+### Soft bodies need anatomy
+
+A hook attaches at a pin. A bait is *pierced somewhere*, so a soft-body component declares **landmarks**: named positions along the body, normalised from nose to tail.
+
+Normalised rather than absolute, so one rigging record works across a 100 mm worm and a 180 mm worm without change.
+
+```yaml
+kind: component
+schema_version: 0
+id: bait.stick-worm
+name: Stick worm
+body_profile: straight
+soft: true
+landmarks:
+  nose:     0.00
+  collar:   0.08
+  egg-sack: 0.45
+  tail:     1.00
+variants:
+  axis: length_mm
+  values: [100, 125, 150, 180]
+```
+
+An action names both a landmark and a **surface**, because "insert at the nose" and "exit through the belly" are different faces of the same body.
+
+### Texposed, worked
+
+> ⚠ **The verb vocabulary below is provisional.** Whether an established notation exists for piercing a soft body, and what to borrow from surgical suturing, textile stitch charts, or needle-insertion planning, is under research in [`docs/research/05-rigging-notation.md`](research/05-rigging-notation.md). The *structure* here is settled; the two-letter codes are not.
+
+```yaml
+kind: rigging
+schema_version: 0
+id: rigging.texposed
+names:
+  canonical: Texposed
+  aliases: [Texas rigged weedless, tex-posed, skin hooked]
+weedless: true
+applies_to:
+  body_profile: [straight, curly-tail, creature, craw]
+  hook_bend: [ewg, offset-worm, straight-shank]
+stages:
+  - id: 1
+    actions:
+      - {verb: IN, at: nose, surface: nose, depth: 0.06}
+      - {verb: OUT, at: 0.06, surface: belly}
+    prose: Insert the point into the centre of the nose and bring it out through the belly about a quarter inch back.
+  - id: 2
+    actions:
+      - {verb: SL, subject: bait, along: shank, until: collar-at-eye}
+    prose: Slide the bait up the shank until the nose seats against the hook eye.
+  - id: 3
+    actions:
+      - {verb: RO, subject: hook, relative_to: bait, angle_deg: 180}
+    prose: Rotate the hook 180 degrees so the point faces the body.
+  - id: 4
+    actions:
+      - {verb: AL, subject: bait, against: shank}
+    prose: Lay the hook alongside the bait and check it hangs perfectly straight before piercing.
+  - id: 5
+    actions:
+      - {verb: IN, at: 0.30, surface: belly}
+      - {verb: BU, at: 0.30, surface: back, depth: 0.01}
+    prose: Bring the point back through the body and bury it just under the skin on the back.
+failure_modes:
+  - Bait bunched or curved on the shank, which makes it spin and twist the line. Stage 4 exists to prevent this and is the step most often skipped.
+  - Point buried too deep, which costs hooksets.
+  - Entry not centred in the nose, which makes the bait ride crooked.
+```
+
+Stage 4 is not padding.
+A Texas rig that is not straight on the shank spins, and that is the single most common way this presentation is got wrong.
+It is an action with no piercing in it, which is exactly the kind of step photo sequences omit and a staged procedure keeps.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `weedless` | bool | yes | Whether the finished presentation hides the point. Drives cover suitability in a technique. |
+| `applies_to.body_profile` | list of `body_profile` | yes | Which bait shapes this works on. Mismatch is a hard error in a rig. |
+| `applies_to.hook_bend` | list of `bend_style` | yes | Which hook geometries this works on. |
+| `stages[].actions[].verb` | `rig_verb` | yes | **Provisional.** See the warning above. |
+| `actions[].at` | landmark or number | yes | A declared landmark name, or a normalised position from 0 at the nose to 1 at the tail. |
+| `actions[].surface` | `landmark_surface` | piercing verbs | Which face of the body. |
+| `actions[].depth` | number | no | Normalised depth of travel through the body. |
+| `actions[].angle_deg` | number | RO only | Rotation in degrees. |
+| `failure_modes` | list | no | How this presentation goes wrong. |
+
+### In a rig
+
+The parallel with knots is exact, which is the point:
+
+```yaml
+- {from: leader, to: hook, rel: tied,   knot: knot.palomar,      pin: eye}
+- {from: hook,   to: bait, rel: rigged, rigging: rigging.texposed}
+```
 
 ---
 
@@ -928,5 +1053,5 @@ Rule 1 is the one worth noticing.
 - **Where does geometry come from?** Suber's notation says what to do, not where anything is. Either a solver derives positions from the actions, or stages need an optional `geometry` block of seed control points. That field cannot honestly be designed before a renderer exists, so it is absent rather than guessed at.
 - **Do handedness variants come free** as a transform over `chirality` and the direction fields, or do some knots need explicit encodings?
 - **Where do generated assets live**, and are they committed or built?
-- **Does `rel: rigged`** (bait onto a hook) belong in the rig graph, or is it presentation?
+- **What notation should `rigging` use?** The structure is settled and the verb vocabulary is not. Whether an established system exists for describing a rigid object piercing a soft body, and what to take from surgical suture paths, textile stitch charts, or needle-insertion planning, is under research in [`docs/research/05-rigging-notation.md`](research/05-rigging-notation.md).
 - **Suber's notation carries a bare copyright notice with no licence grant.** Implementable under the idea and expression distinction, but adopting his vocabulary wholesale warrants asking him directly.
