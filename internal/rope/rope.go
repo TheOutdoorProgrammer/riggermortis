@@ -41,6 +41,11 @@ type Layout struct {
 	Tail float64
 	// Flare lifts the ends away from the axis so they read as loose.
 	Flare float64
+	// Stub is how far a working end runs past the knot. A bend joins two
+	// ropes: each cord has a long standing part heading off one way and a
+	// short working end the other, and they head off opposite ways. Equal
+	// tails on both sides is what made this read as a twisted pair.
+	Stub float64
 }
 
 const samplesPerHalfTurn = 34
@@ -82,10 +87,65 @@ func Build(l Layout) []Cord {
 	}
 
 	ay, az := l.Radius*math.Cos(theta), l.Radius*math.Sin(theta)
-	a.P = append(a.P, tail(x, l.Tail, ay, az, ay+sign(ay)*l.Flare, az)...)
-	b.P = append(b.P, tail(x, l.Tail, -ay, -az, -ay-sign(ay)*l.Flare, -az)...)
+	outA, outB := l.Stub, l.Tail
+	if outA == 0 {
+		outA = l.Tail
+	}
+	a.P = append(a.P, tail(x, outA, ay, az, ay+sign(ay)*l.Flare*0.4, az)...)
+	b.P = append(b.P, tail(x, outB, -ay, -az, -ay-sign(ay)*l.Flare, -az)...)
 
 	return []Cord{a, b}
+}
+
+// doubleBack turns a working end around and runs it home alongside its own
+// standing part. It sits outside the twist radius so it never re-crosses it,
+// which is how a dressed reef knot actually lies.
+func doubleBack(x, y0, z0, yOut, xHome float64) []V3 {
+	turn := 78.0
+	way := []V3{
+		{x, y0, z0},
+		{x + turn*0.55, y0 + (yOut-y0)*0.35, z0 * 0.55},
+		{x + turn, yOut * 0.92, 0},
+		{x + turn*0.55, yOut, 0},
+		{x - turn*0.2, yOut, 0},
+		{(x + xHome) / 2, yOut, 0},
+		{xHome, yOut, 0},
+	}
+	return sampleCR3(way, 96)
+}
+
+// sampleCR3 walks a Catmull-Rom spline through waypoints, densely enough that
+// crossing detection reads the curve rather than the chords between points.
+func sampleCR3(w []V3, n int) []V3 {
+	at := func(i int) V3 {
+		if i < 0 {
+			return w[0]
+		}
+		if i >= len(w) {
+			return w[len(w)-1]
+		}
+		return w[i]
+	}
+	out := make([]V3, 0, n)
+	segs := len(w) - 1
+	for s := 0; s < segs; s++ {
+		p0, p1, p2, p3 := at(s-1), at(s), at(s+1), at(s+2)
+		steps := n / segs
+		for i := 0; i < steps; i++ {
+			t := float64(i) / float64(steps)
+			t2, t3 := t*t, t*t*t
+			f := func(a, b, c, d float64) float64 {
+				return 0.5 * ((2 * b) + (-a+c)*t +
+					(2*a-5*b+4*c-d)*t2 + (-a+3*b-3*c+d)*t3)
+			}
+			out = append(out, V3{
+				f(p0.X, p1.X, p2.X, p3.X),
+				f(p0.Y, p1.Y, p2.Y, p3.Y),
+				f(p0.Z, p1.Z, p2.Z, p3.Z),
+			})
+		}
+	}
+	return append(out, w[len(w)-1])
 }
 
 // tail runs a straight-ish lead from the axis out to a flared end.

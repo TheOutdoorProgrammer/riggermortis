@@ -14,14 +14,15 @@
 package solve
 
 import (
+	"github.com/theoutdoorprogrammer/riggermortis/internal/rope"
 	"github.com/theoutdoorprogrammer/riggermortis/internal/spec"
 )
 
 // Canvas and track geometry. Two strands run left to right and swap places at
 // each crossing, which is the clearest way to show an interweave.
 const (
-	width      = 560.0
-	height     = 200.0
+	width      = 620.0
+	height     = 300.0
 	margin     = 78.0
 	trackTop   = 68.0
 	trackLow   = 132.0
@@ -124,6 +125,11 @@ func repeatCount(v any) int {
 
 // Geometry lays the crossing sequence out, one drawing per stage. Returns nil
 // when there are no crossings: no diagram beats a misleading one.
+// Geometry draws the knot at each stage, growing the weave as it is tied.
+//
+// Stage k shows every crossing introduced up to k, so stepping forward adds a
+// turn to the same rope rather than swapping in a new picture. Returns nil
+// when the actions yield no crossings: no diagram beats a misleading one.
 func Geometry(r *spec.Record) *spec.Geometry {
 	k := Read(r)
 	if len(k.Crossings) == 0 {
@@ -137,101 +143,42 @@ func Geometry(r *spec.Record) *spec.Geometry {
 		if stage == 0 {
 			stage = i + 1
 		}
-		seated := k.Tighten > 0 && stage >= k.Tighten
+		var upto []Crossing
+		for _, c := range k.Crossings {
+			if c.Stage <= stage {
+				upto = append(upto, c)
+			}
+		}
+		if len(upto) == 0 {
+			upto = k.Crossings[:1]
+		}
+
+		l := rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
+			Tail: 150, Flare: 40, Stub: 60}
+		if k.Tighten > 0 && stage >= k.Tighten {
+			// Seating pulls the turns together and shrinks the rope's throw.
+			l.Radius, l.Pitch, l.Flare = 19, 54, 26
+		}
 		g.Stages = append(g.Stages, spec.StageGeometry{
 			Stage:    stage,
-			Segments: weave(k.Crossings, seated),
+			Segments: rope.Project(rope.Build(l), width, height),
 		})
 	}
 	return g
 }
 
-// weave builds both cords as continuous polylines, then cuts each into pieces
-// at the crossings so paint order can differ per crossing. Pieces overlap
-// slightly at their joins, so a casing never bites into its own cord.
-func weave(cs []Crossing, seated bool) []spec.Segment {
-	n := len(cs)
-
-	left, right := margin, width-margin
-	top, low := trackTop, trackLow
-	if seated {
-		// Seating pulls the crossings together and flattens the strands.
-		mid := (left + right) / 2
-		left, right = mid-(mid-left)*0.55, mid+(right-mid)*0.55
-		c := (top + low) / 2
-		top, low = c-(c-top)*0.62, c+(low-c)*0.62
-	}
-
-	span := (right - left) / float64(n)
-	pad := span * 0.42
-	if pad > maxSwapPad {
-		pad = maxSwapPad
-	}
-	mid := (top + low) / 2
-
-	xs := make([]float64, n)
-	for i := range xs {
-		xs[i] = left + span*(float64(i)+0.5)
-	}
-
-	// Track occupancy: cord "a" starts on top, "b" below, and they exchange at
-	// every crossing.
-	yFor := func(cord string, after int) float64 {
-		swapped := after%2 == 1
-		aTop := (cord == "a") != swapped
-		if aTop {
-			return top
+// twists collapses a run of same-handed crossings into one twist, which is
+// what a half knot physically is: the cords wrapping around each other.
+func twists(cs []Crossing) []rope.Twist {
+	var out []rope.Twist
+	for _, c := range cs {
+		if n := len(out); n > 0 && sameSign(out[n-1].Turns, c.Sign) {
+			out[n-1].Turns += c.Sign
+			continue
 		}
-		return low
-	}
-
-	var out []spec.Segment
-
-	for _, cord := range []string{"a", "b"} {
-		// Lead-in.
-		out = append(out, spec.Segment{
-			Cord: cord, Z: 0,
-			Points: []spec.Point{
-				{0, yFor(cord, 0)},
-				{(xs[0] - pad) * 0.5, yFor(cord, 0)},
-				{xs[0] - pad + tailFade, yFor(cord, 0)},
-			},
-		})
-
-		for i := 0; i < n; i++ {
-			yIn, yOut := yFor(cord, i), yFor(cord, i+1)
-			descending := yOut > yIn
-			over := (cs[i].Sign > 0) == descending
-
-			z := 1
-			if over {
-				z = 2
-			}
-			out = append(out, spec.Segment{
-				Cord: cord, Z: z, Stage: cs[i].Stage,
-				Points: []spec.Point{
-					{xs[i] - pad - tailFade, yIn},
-					{xs[i] - pad*0.45, yIn + (mid-yIn)*0.30},
-					{xs[i], mid},
-					{xs[i] + pad*0.45, yOut - (yOut-mid)*0.30},
-					{xs[i] + pad + tailFade, yOut},
-				},
-			})
-
-			// Run to the next crossing, or out to the edge.
-			nextX := width
-			if i+1 < n {
-				nextX = xs[i+1] - pad
-			}
-			out = append(out, spec.Segment{
-				Cord: cord, Z: 0,
-				Points: []spec.Point{
-					{xs[i] + pad - tailFade, yOut},
-					{(xs[i] + pad + nextX) / 2, yOut},
-					{nextX + tailFade, yOut},
-				},
-			})
-		}
+		out = append(out, rope.Twist{Turns: c.Sign})
 	}
 	return out
 }
+
+func sameSign(a, b int) bool { return (a < 0) == (b < 0) }
