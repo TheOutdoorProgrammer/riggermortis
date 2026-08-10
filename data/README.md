@@ -2,7 +2,7 @@
 
 <!-- SPDX-License-Identifier: ODbL-1.0 -->
 > **Licence.** Everything in this directory, at any depth, is licensed under the
-> **Open Database License (ODbL) v1.0**. See [LICENSE-DATA](../LICENSE-DATA).
+> **Open Database License (ODbL) v1.0**. See [LICENSE](LICENSE).
 > The rest of the repository, including the spec and all code, is Apache-2.0.
 
 **This directory is the licence boundary.** A file inside it is part of the database. A file outside it is not.

@@ -3,7 +3,7 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 > **Licence.** This document is **Apache-2.0**.
 > The dataset it tracks, under [`data/`](../data/), is **ODbL-1.0**.
-> See [LICENSE](../LICENSE), [LICENSE-DATA](../LICENSE-DATA), and [ADR 0005](../adr/0005-dual-licence-odbl-and-apache.md).
+> See [LICENSE](../LICENSE), [data/LICENSE](../data/LICENSE), and [ADR 0005](../adr/0005-dual-licence-odbl-and-apache.md).
 
 What exists, what does not, and what a human has actually confirmed.
 

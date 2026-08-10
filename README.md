@@ -161,12 +161,14 @@ What a thing is made of and how it behaves is normative; who sold it is not.
 
 Dual licensed, and the split is deliberate.
 
-| What | Licence | Why |
-| --- | --- | --- |
-| `data/` | **ODbL-1.0** | The dataset is the expensive part and it stays open. |
-| Everything else, including this spec and all code | **Apache-2.0** | Anyone should be able to implement the format and owe nothing. |
+| What | Licence | Text | Why |
+| --- | --- | --- | --- |
+| `data/` | **ODbL-1.0** | [`data/LICENSE`](data/LICENSE) | The dataset is the expensive part and it stays open. |
+| Everything else, including this spec and all code | **Apache-2.0** | [`LICENSE`](LICENSE) | Anyone should be able to implement the format and owe nothing. |
 
-**The directory is the boundary.** A file inside `data/` is part of the database. A file outside it is not.
+**The directory is the boundary**, and each licence text sits inside the tree it governs.
+A file inside `data/` is part of the database and its terms are in the same directory.
+A file outside it is not.
 
 What ODbL means for you in practice:
 

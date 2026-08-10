@@ -97,5 +97,5 @@ Bad:
 
 ## More Information
 
-- [LICENSE](../LICENSE), [LICENSE-DATA](../LICENSE-DATA), [NOTICE](../NOTICE), and [`data/README.md`](../data/README.md) for the boundary in practice.
+- [LICENSE](../LICENSE), [data/LICENSE](../data/LICENSE), [NOTICE](../NOTICE), and [`data/README.md`](../data/README.md) for the boundary in practice.
 - Every record carries `# SPDX-License-Identifier: ODbL-1.0`, and every spec document carries the Apache-2.0 equivalent, so a file separated from its repository keeps its terms. CI enforces this.
