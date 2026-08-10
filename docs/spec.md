@@ -72,7 +72,7 @@ A self-describing record survives that.
 
 **No brand, manufacturer, product line, or model name appears in any normative field.**
 
-A rig calls for a circle hook with an eleven millimetre gap, ten pound braid, and a half ounce egg sinker.
+A rig calls for a circle hook with an eleven millimetre gap, braid breaking near forty-five newtons, and a fourteen gram egg sinker.
 It never calls for a named product.
 
 The reason is not squeamishness about commerce, it is that a trade label carries no information.
@@ -84,10 +84,10 @@ The brand was only ever a proxy for a physical property, so the spec records the
 
 | Instead of | Record |
 | --- | --- |
-| size 3 split ring | `rating_lb: 25` |
+| size 3 split ring | `rating_n: 111` |
 | 2/0 octopus hook | `gap_mm: 11`, `point_style: turned-in`, `shank: short` |
-| 10 lb fluorocarbon | `material: fluoro`, `test_lb: 10`, `diameter_mm: 0.285` |
-| 1/2 oz egg sinker | `mass_oz: 0.5`, `mounting: threaded` |
+| 10 lb fluorocarbon | `material: fluoro`, `breaking_load_n: 44.5`, `diameter_mm: 0.285` |
+| 1/2 oz egg sinker | `mass_g: 14.2`, `mounting: threaded` |
 
 Two consequences fall out, both good.
 Comparability stops being a hazard, because nothing compares labels any more.
@@ -110,18 +110,40 @@ Nothing mechanical catches that, so it is a review responsibility and rule 22 st
 **No physical quantity is ever a bare number.**
 The unit is part of the field name, always, so a value can never be misread and never needs parsing.
 
-| Quantity | Suffix | Canonical |
-| --- | --- | --- |
-| Small dimensions | `_mm` | millimetres |
-| Lengths a person states | `_in`, `_ft` | as authored |
-| Mass | `_g`, `_oz` | as authored |
-| Strength and rating | `_lb` | pounds |
-| Depth | `_ft` | feet |
-| Temperature | `_f` | Fahrenheit |
+**The spec is SI only.**
 
-Mixing metric small-dimensions with imperial strength looks inconsistent and is deliberate: it is how the domain is actually written.
-Line diameter is universally in millimetres even in the United States, and line strength is universally in pounds.
-Conversion is a display concern, never a storage one.
+| Quantity | Suffix | Unit |
+| --- | --- | --- |
+| Small dimensions | `_mm` | millimetre |
+| Distance and depth | `_m` | metre |
+| Mass | `_g` | gram |
+| Force and breaking load | `_n` | newton |
+| Temperature | `_c` | degree Celsius |
+| Time | `_s` | second |
+| Angle | `_deg` | degree |
+
+"SI only" here means SI base and derived units, their prefixed forms, and the units the SI Brochure accepts for use with SI, which is what makes degree Celsius and the plane degree legal.
+
+An earlier draft stored pounds, ounces, inches and Fahrenheit on the grounds that this is how the domain writes things.
+That was the same mistake as recording a manufacturer: it stored the **label** instead of the **property**.
+How anglers write a number is a display concern, and the display layer converts freely.
+A reader in Ohio sees "10 lb braid" and a reader in Queensland sees "4.5 kg", from one stored value that is neither.
+
+### Breaking load is stored in newtons
+
+This is the one judgement worth arguing with.
+
+Line "test" and hardware "rating" describe a **force**, and the SI unit of force is the newton.
+The international fishing convention states line classes in kilograms, which is metric but is a mass standing in for a force, and adopting it would reintroduce exactly the proxy the vendor-neutrality rule removed.
+
+So `breaking_load_n: 44.5` rather than `test_lb: 10` or `test_kg: 4.5`.
+Both familiar labels are then display conversions, and neither is privileged.
+
+The honest cost is authoring ergonomics: nobody has a feel for a knot holding 44.5 newtons.
+That is a tooling problem rather than a spec problem, so the authoring CLI accepts a value in any unit and normalises on write, and CI range-checks the result for plausibility.
+Hand-converting is where the errors would come from, and no author should be doing it.
+
+Anything a person would state as a range is stored as a range, `[min, max]`, never flattened to a midpoint.
 
 Anything a person would state as a range is stored as a range, `[min, max]`, never flattened to a midpoint.
 
@@ -200,7 +222,8 @@ This section is the source of truth from which the JSON Schema is generated, so 
 | Enum | Values |
 | --- | --- |
 | `mounting` | `tied`, `threaded` |
-| `variant_axis` | `mass_oz`, `mass_g`, `gap_mm`, `diameter_mm`, `rating_lb`, `length_mm`, `supports_g` |
+| `unit` | `mm`, `m`, `g`, `n`, `c`, `s`, `deg` |
+| `variant_axis` | `mass_g`, `gap_mm`, `diameter_mm`, `rating_n`, `breaking_load_n`, `length_mm`, `supports_g` |
 | `point_style` | `straight`, `turned-in`, `turned-out`, `knife-edge`, `needle` |
 | `shank` | `short`, `standard`, `long`, `extra-long` |
 | `bend_style` | `round`, `octopus`, `circle`, `worm`, `ewg`, `kahle`, `aberdeen`, `siwash`, `treble` |
@@ -290,8 +313,8 @@ pins:
   - {id: eye-b, type: closed-eye, wire_diameter_mm: 0.9}
 blocks_passage: true
 variants:
-  axis: rating_lb
-  values: [25, 35, 55, 80, 130]
+  axis: rating_n
+  values: [111, 156, 245, 356, 578]
 validation:
   status: unvalidated
   events: []
@@ -357,8 +380,8 @@ properties:
   underwater_visibility: low
   knot_sensitivity: high
 diameters:
-  - {test_lb: 10, diameter_mm: 0.285, source: src.example}
-  - {test_lb: 20, diameter_mm: 0.405, source: src.example}
+  - {breaking_load_n: 44.5, diameter_mm: 0.285, source: src.example}
+  - {breaking_load_n: 89.0, diameter_mm: 0.405, source: src.example}
 validation: {status: unvalidated, events: []}
 ```
 
@@ -366,7 +389,7 @@ validation: {status: unvalidated, events: []}
 | --- | --- | --- | --- |
 | `material` | `line_material` | yes | The material family. |
 | `properties.knot_sensitivity` | `knot_sensitivity` | yes | How much the material punishes a poorly chosen knot. Fluorocarbon and braid are both `high` for different reasons, which is what makes rule 16 worth having. |
-| `diameters[].test_lb` | number | yes | Stated strength on the label. |
+| `diameters[].breaking_load_n` | number | yes | Breaking load in newtons. The familiar "10 lb test" is a display conversion of this. |
 | `diameters[].diameter_mm` | number | yes | Actual measured diameter. Feeds rule 3. |
 | `diameters[].source` | ref | yes | Required. Diameter per stated test is **not** standardised, so every pairing is a sourced measurement rather than a fact about the material. Where sources disagree, both rows exist and `rank` separates them. |
 
@@ -431,9 +454,9 @@ objects:
 stages:
   - id: 1
     actions:
-      - {verb: MB, subject: RP, names: BT.1, length_in: 6}
+      - {verb: MB, subject: RP, names: BT.1, length_mm: 150}
     prose: Double roughly six inches of line back on itself to form a bight.
-    notation: "* MB(RP=BT.1), LG(BT.1:6in)"
+    notation: "* MB(RP=BT.1), LG(BT.1:150mm)"
   - id: 2
     actions:
       - {verb: RV, subject: BT.1, through: HookEye.1, direction: F-A, force: push}
@@ -504,11 +527,11 @@ schema_version: 0
 id: rig.carolina
 names: {canonical: Carolina rig, aliases: [C-rig]}
 nodes:
-  - {id: main,   type: line, role: main-line, material: braid, test_lb: 30}
-  - {id: sinker, ref: weight.egg,    mass_oz: 0.5}
+  - {id: main,   type: line, role: main-line, material: braid, breaking_load_n: 133}
+  - {id: sinker, ref: weight.egg,    mass_g: 14.2}
   - {id: bead,   ref: bead.glass,    diameter_mm: 8}
-  - {id: swivel, ref: swivel.barrel, rating_lb: 55}
-  - {id: leader, type: line, role: leader, material: fluoro, test_lb: 15, length_in: [12, 48]}
+  - {id: swivel, ref: swivel.barrel, rating_n: 245}
+  - {id: leader, type: line, role: leader, material: fluoro, breaking_load_n: 67, length_mm: [305, 1220]}
   - {id: hook,   ref: hook.ewg,      gap_mm: 14}
 edges:
   - {from: main,   to: sinker, rel: threaded, travel: {toward_rod: open, toward_terminal: swivel}}
@@ -636,11 +659,11 @@ id: pattern.dropper-unit
 target: rig
 params:
   - {name: hook, type: ref, required: true}
-  - {name: spacing_in, type: number, required: true}
+  - {name: spacing_mm, type: number, required: true}
 nodes:
   - {id: "drop-{i}", ref: knot.dropper-loop}
   - {id: "hook-{i}", ref: "{hook}"}
-  - {id: "seg-{i}",  type: line, role: leader, length_in: "{spacing_in}"}
+  - {id: "seg-{i}",  type: line, role: leader, length_in: "{spacing_mm}"}
 edges:
   - {from: in,        to: "drop-{i}", rel: continuous, pin: in}
   - {from: "drop-{i}", to: "hook-{i}", rel: looped,    pin: loop}
@@ -664,7 +687,7 @@ expand:
     count: 6
     from: main
     to: sinker
-    with: {hook: hook.sabiki, spacing_in: 6}
+    with: {hook: hook.sabiki, spacing_mm: 150}
 edges:
   - {from: expand.last, to: sinker, rel: tied, knot: knot.improved-clinch, pin: eye}
 ```
@@ -744,8 +767,8 @@ applicability:
   species: [species.largemouth-bass, species.smallmouth-bass]
   cover: [gravel, sand, sparse-grass]
   clarity: [stained, clear]
-  depth_ft: [8, 25]
-  water_temp_f: [55, 80]
+  depth_m: [2.4, 7.6]
+  water_temp_c: [13, 27]
   season: [prespawn, postspawn, summer]
   tier: C
   rank: normal
@@ -767,7 +790,8 @@ validation: {status: unvalidated, events: []}
 | `applicability.cover` | list of `cover` | no | |
 | `applicability.clarity` | list of `clarity` | no | |
 | `applicability.season` | list of `season` | no | |
-| `applicability.depth_ft` | range | no | A range, never a point value. |
+| `applicability.depth_m` | range | no | A range, never a point value. |
+| `applicability.water_temp_c` | range | no | Degrees Celsius, as with everything else. |
 | `applicability.tier` | `tier` | yes | Effectively always `C`. |
 | `applicability.sources` | list | yes | At least one, enforced. |
 | `failure_modes` | list | no | How this presentation goes wrong. Rare in existing references and disproportionately useful. |
@@ -864,6 +888,8 @@ notes: >
 | 22 | No brand, manufacturer, product line, or model name appears in a normative field. Structural for typed fields, since none exists to hold one; review-enforced for free text | error | A / B |
 | 31 | A component's `variants.axis` must be a physical quantity from `variant_axis`, never a trade label | error | A |
 | 32 | A value a rig selects must exist in the referenced component's `variants.values` | error | A |
+| 33 | Every quantity field carries an SI suffix from the `unit` enum. Non-SI suffixes such as `_lb`, `_oz`, `_in`, `_ft` are rejected outright | error | A |
+| 34 | Quantity values must fall in a plausible range for their unit, catching unconverted imperial figures entered by mistake | warning | B |
 | 23 | Nothing publishes with `validation.status: unvalidated` | warning | B |
 | 24 | Patterns expand before rules 1 to 5 run, so a pattern can never hide a structural error | error | A |
 | 25 | Expanded node ids must not collide with declared ids, or with each other | error | A |
