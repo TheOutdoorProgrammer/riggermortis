@@ -77,7 +77,7 @@ A self-describing record survives that.
 
 **No brand, manufacturer, product line, or model name appears in any normative field.**
 
-A rig calls for a circle hook with an eleven millimetre gap, braid breaking near forty-five newtons, and a fourteen gram egg sinker.
+A rig calls for a circle hook with an eleven millimetre gap, braid rated near four and a half kilograms, and a fourteen gram egg sinker.
 It never calls for a named product.
 
 The reason is not squeamishness about commerce, it is that a trade label carries no information.
@@ -89,9 +89,9 @@ The brand was only ever a proxy for a physical property, so the spec records the
 
 | Instead of | Record |
 | --- | --- |
-| size 3 split ring | `rating_n: 111` |
+| size 3 split ring | `rating_kg: 11` |
 | 2/0 octopus hook | `gap_mm: 11`, `point_style: turned-in`, `shank: short` |
-| 10 lb fluorocarbon | `material: fluoro`, `breaking_load_n: 44.5`, `diameter_mm: 0.285` |
+| 10 lb fluorocarbon | `material: fluoro`, `breaking_load_kg: 4.5`, `diameter_mm: 0.285` |
 | 1/2 oz egg sinker | `mass_g: 14.2`, `mounting: threaded` |
 
 Two consequences fall out, both good.
@@ -115,38 +115,53 @@ Nothing mechanical catches that, so it is a review responsibility and rule 22 st
 **No physical quantity is ever a bare number.**
 The unit is part of the field name, always, so a value can never be misread and never needs parsing.
 
-**The spec is SI only.**
+**SI where possible, with genuinely universal fishing standards as the only exception.**
 
 | Quantity | Suffix | Unit |
 | --- | --- | --- |
 | Small dimensions | `_mm` | millimetre |
 | Distance and depth | `_m` | metre |
 | Mass | `_g` | gram |
-| Force and breaking load | `_n` | newton |
+| Breaking load and rating | `_kg` | kilogram, see below |
 | Temperature | `_c` | degree Celsius |
 | Time | `_s` | second |
 | Angle | `_deg` | degree |
 
-"SI only" here means SI base and derived units, their prefixed forms, and the units the SI Brochure accepts for use with SI, which is what makes degree Celsius and the plane degree legal.
+"SI" here means SI base and derived units, their prefixed forms, and the units the SI Brochure accepts for use with SI, which is what makes degree Celsius and the plane degree legal.
 
 An earlier draft stored pounds, ounces, inches and Fahrenheit on the grounds that this is how the domain writes things.
 That was the same mistake as recording a manufacturer: it stored the **label** instead of the **property**.
 How anglers write a number is a display concern, and the display layer converts freely.
-A reader in Ohio sees "10 lb braid" and a reader in Queensland sees "4.5 kg", from one stored value that is neither.
+A reader in Ohio sees "10 lb braid" and a reader in Queensland sees "4.5 kg", from one stored value.
 
-### Breaking load is stored in newtons
+### The exception test
 
-This is the one judgement worth arguing with.
+A non-SI unit is permitted only when the fishing world has **one** convention for that quantity worldwide.
+Where usage is split by region, SI wins and the display layer converts.
 
-Line "test" and hardware "rating" describe a **force**, and the SI unit of force is the newton.
-The international fishing convention states line classes in kilograms, which is metric but is a mass standing in for a force, and adopting it would reintroduce exactly the proxy the vendor-neutrality rule removed.
+| Quantity | Convention | Verdict |
+| --- | --- | --- |
+| Line diameter | Millimetres everywhere, including on United States packaging | Already SI |
+| Breaking load | Pounds in the United States, kilograms elsewhere; IGFA publishes both | Split, so SI |
+| Sinker and lure mass | Ounces in the United States, grams elsewhere | Split, so SI |
+| Depth | Feet in the United States, metres elsewhere | Split, so SI |
+| Water temperature | Fahrenheit in the United States, Celsius elsewhere | Split, so SI |
+| Leader length | Inches and feet in the United States, centimetres elsewhere | Split, so SI |
 
-So `breaking_load_n: 44.5` rather than `test_lb: 10` or `test_kg: 4.5`.
-Both familiar labels are then display conversions, and neither is privileged.
+**The exception register is currently empty**, and that is worth stating rather than inventing an entry to justify the rule.
+Every genuinely universal non-SI standard in angling turns out to belong to fly fishing: AFTMA line weight, which is a grain-based scale used identically worldwide, and tippet X sizing, likewise universal.
+Fly fishing is out of scope for v1, so nothing qualifies yet.
 
-The honest cost is authoring ergonomics: nobody has a feel for a knot holding 44.5 newtons.
-That is a tooling problem rather than a spec problem, so the authoring CLI accepts a value in any unit and normalises on write, and CI range-checks the result for plausibility.
-Hand-converting is where the errors would come from, and no author should be doing it.
+The clause stays because that scope will change, and because it records the reasoning so a future contributor does not "correct" a legitimate exception into SI and break it.
+
+### Breaking load is in kilograms
+
+`breaking_load_kg` and `rating_kg` follow the international line-class convention, which IGFA publishes in kilograms and which is what metric-market packaging prints.
+
+**Precisely, this is a load, not a mass.** What is being described is the force at which something fails, so the strictly correct SI unit is the newton. Kilogram-force is used here because it is the settled convention in the one place the world agrees, and storing newtons would produce a spec no angler could sanity-check while gaining nothing a conversion cannot supply. The field name carries `_kg` and this paragraph carries the caveat.
+
+Authoring in any unit is a tooling concern.
+The authoring CLI accepts pounds, ounces or newtons and normalises on write, because hand-conversion is where errors come from and no author should be doing it.
 
 Anything a person would state as a range is stored as a range, `[min, max]`, never flattened to a midpoint.
 
@@ -227,8 +242,8 @@ This section is the source of truth from which the JSON Schema is generated, so 
 | Enum | Values |
 | --- | --- |
 | `mounting` | `tied`, `threaded` |
-| `unit` | `mm`, `m`, `g`, `n`, `c`, `s`, `deg` |
-| `variant_axis` | `mass_g`, `gap_mm`, `diameter_mm`, `rating_n`, `breaking_load_n`, `length_mm`, `supports_g` |
+| `unit` | `mm`, `m`, `g`, `kg`, `c`, `s`, `deg` |
+| `variant_axis` | `mass_g`, `gap_mm`, `diameter_mm`, `rating_kg`, `breaking_load_kg`, `length_mm`, `supports_g` |
 | `point_style` | `straight`, `turned-in`, `turned-out`, `knife-edge`, `needle` |
 | `shank` | `short`, `standard`, `long`, `extra-long` |
 | `bend_style` | `round`, `octopus`, `circle`, `worm`, `ewg`, `kahle`, `aberdeen`, `siwash`, `treble` |
@@ -318,8 +333,8 @@ pins:
   - {id: eye-b, type: closed-eye, wire_diameter_mm: 0.9}
 blocks_passage: true
 variants:
-  axis: rating_n
-  values: [111, 156, 245, 356, 578]
+  axis: rating_kg
+  values: [11, 16, 25, 36, 59]
 validation:
   status: unvalidated
   events: []
@@ -385,8 +400,8 @@ properties:
   underwater_visibility: low
   knot_sensitivity: high
 diameters:
-  - {breaking_load_n: 44.5, diameter_mm: 0.285, source: src.example}
-  - {breaking_load_n: 89.0, diameter_mm: 0.405, source: src.example}
+  - {breaking_load_kg: 4.5, diameter_mm: 0.285, source: src.example}
+  - {breaking_load_kg: 9.1, diameter_mm: 0.405, source: src.example}
 validation: {status: unvalidated, events: []}
 ```
 
@@ -394,7 +409,7 @@ validation: {status: unvalidated, events: []}
 | --- | --- | --- | --- |
 | `material` | `line_material` | yes | The material family. |
 | `properties.knot_sensitivity` | `knot_sensitivity` | yes | How much the material punishes a poorly chosen knot. Fluorocarbon and braid are both `high` for different reasons, which is what makes rule 16 worth having. |
-| `diameters[].breaking_load_n` | number | yes | Breaking load in newtons. The familiar "10 lb test" is a display conversion of this. |
+| `diameters[].breaking_load_kg` | number | yes | Breaking load in kilograms, the international line-class convention. The familiar "10 lb test" is a display conversion of this. |
 | `diameters[].diameter_mm` | number | yes | Actual measured diameter. Feeds rule 3. |
 | `diameters[].source` | ref | yes | Required. Diameter per stated test is **not** standardised, so every pairing is a sourced measurement rather than a fact about the material. Where sources disagree, both rows exist and `rank` separates them. |
 
@@ -532,11 +547,11 @@ schema_version: 0
 id: rig.carolina
 names: {canonical: Carolina rig, aliases: [C-rig]}
 nodes:
-  - {id: main,   type: line, role: main-line, material: braid, breaking_load_n: 133}
+  - {id: main,   type: line, role: main-line, material: braid, breaking_load_kg: 13.6}
   - {id: sinker, ref: weight.egg,    mass_g: 14.2}
   - {id: bead,   ref: bead.glass,    diameter_mm: 8}
-  - {id: swivel, ref: swivel.barrel, rating_n: 245}
-  - {id: leader, type: line, role: leader, material: fluoro, breaking_load_n: 67, length_mm: [305, 1220]}
+  - {id: swivel, ref: swivel.barrel, rating_kg: 25}
+  - {id: leader, type: line, role: leader, material: fluoro, breaking_load_kg: 6.8, length_mm: [305, 1220]}
   - {id: hook,   ref: hook.ewg,      gap_mm: 14}
 edges:
   - {from: main,   to: sinker, rel: threaded, travel: {toward_rod: open, toward_terminal: swivel}}
@@ -893,7 +908,7 @@ notes: >
 | 22 | No brand, manufacturer, product line, or model name appears in a normative field. Structural for typed fields, since none exists to hold one; review-enforced for free text | error | A / B |
 | 31 | A component's `variants.axis` must be a physical quantity from `variant_axis`, never a trade label | error | A |
 | 32 | A value a rig selects must exist in the referenced component's `variants.values` | error | A |
-| 33 | Every quantity field carries an SI suffix from the `unit` enum. Non-SI suffixes such as `_lb`, `_oz`, `_in`, `_ft` are rejected outright | error | A |
+| 33 | Every quantity field carries an SI suffix from the `unit` enum. Non-SI suffixes such as `_lb`, `_oz`, `_in`, `_ft` are rejected unless registered in the exception table, which is currently empty | error | A |
 | 34 | Quantity values must fall in a plausible range for their unit, catching unconverted imperial figures entered by mistake | warning | B |
 | 23 | Nothing publishes with `validation.status: unvalidated` | warning | B |
 | 24 | Patterns expand before rules 1 to 5 run, so a pattern can never hide a structural error | error | A |
