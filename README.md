@@ -154,4 +154,4 @@ riggermortis/
 
 ---
 
-Built by [Nerds Who Fish](https://github.com/NerdsWhoFish).
+Research reports behind every claim above live in [`docs/research/`](docs/research/), with citations.
