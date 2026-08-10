@@ -25,7 +25,7 @@ edges:
   - from: main
     to: bead
     rel: threaded
-    travel: {toward_rod: sinker, toward_terminal: swivel}
+    travel: {toward_rod: open, toward_terminal: swivel}
 
   - {from: main, to: swivel, rel: tied, knot: knot.palomar, pin: eye-a}
   - {from: swivel, to: leader, rel: tied, knot: knot.palomar, pin: eye-b}

@@ -1,0 +1,53 @@
+name: pr
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  spec:
+    name: spec shape and conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cue-lang/setup-cue@v1
+      - name: Records match the spec
+        run: make validate
+      - name: Invalid fixtures are still rejected
+        run: make conformance
+
+  data:
+    name: cross-record rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - run: go vet ./...
+      - run: go test ./... 2>&1 | tail -20
+      - name: Graph and reference rules
+        run: go run ./cmd/rig
+
+  hygiene:
+    name: licence headers and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every record declares its licence
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            head -1 "$f" | grep -q 'SPDX-License-Identifier: ODbL-1.0' || {
+              echo "::error file=$f::missing ODbL SPDX header"; missing=1; }
+          done < <(find data -name '*.yaml')
+          exit $missing
+      - name: Nothing outside data/ claims to be ODbL
+        run: |
+          stray=$(grep -rl 'SPDX-License-Identifier: ODbL-1.0' --include='*.md' --include='*.go' --include='*.cue' . || true)
+          if [ -n "$stray" ]; then echo "::error::ODbL header outside data/: $stray"; exit 1; fi
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.x'}
+      - run: pip install --quiet yamllint
+      - run: yamllint data/ conformance/

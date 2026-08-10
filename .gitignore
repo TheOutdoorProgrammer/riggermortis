@@ -7,3 +7,4 @@ build/
 *.log
 .venv/
 __pycache__/
+/rig

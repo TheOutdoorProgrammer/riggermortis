@@ -5,7 +5,7 @@ CUE := cue
 # make the validator report success on nothing.
 PAIRS := components:Component lines:Line knots:Knot riggings:Rigging rigs:Rig sources:Source
 
-.PHONY: check validate conformance fmt
+.PHONY: check validate conformance rules fmt
 
 ## Validate every record against the kind its directory implies.
 validate:
@@ -41,4 +41,8 @@ fmt:
 	@$(CUE) fmt ./cue/
 	@yamllint data/ conformance/ 2>/dev/null || true
 
-check: validate conformance
+## Cross-record rules: references, graph traversal, variant selection.
+rules:
+	@go run ./cmd/rig
+
+check: validate conformance rules

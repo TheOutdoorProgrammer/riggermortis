@@ -1,0 +1,42 @@
+name: main
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: full check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cue-lang/setup-cue@v1
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - run: make check
+      - run: go run ./cmd/rig
+
+  report:
+    name: dataset report
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      # Warnings are the project's honest debt: unvalidated records and
+      # outstanding citations. Surfaced on every merge so they cannot rot quietly.
+      - name: Outstanding debt
+        run: |
+          {
+            echo '## Dataset'
+            echo '```'
+            go run ./cmd/rig | tail -3
+            echo '```'
+            echo '### Unvalidated'
+            go run ./cmd/rig | grep R023 | wc -l | xargs echo 'records with no human confirmation:'
+            echo '### Citation debt'
+            go run ./cmd/rig | grep R040 || echo 'none'
+          } >> "$GITHUB_STEP_SUMMARY"
