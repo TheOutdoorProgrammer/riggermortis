@@ -97,23 +97,6 @@ func Build(l Layout) []Cord {
 	return []Cord{a, b}
 }
 
-// doubleBack turns a working end around and runs it home alongside its own
-// standing part. It sits outside the twist radius so it never re-crosses it,
-// which is how a dressed reef knot actually lies.
-func doubleBack(x, y0, z0, yOut, xHome float64) []V3 {
-	turn := 78.0
-	way := []V3{
-		{x, y0, z0},
-		{x + turn*0.55, y0 + (yOut-y0)*0.35, z0 * 0.55},
-		{x + turn, yOut * 0.92, 0},
-		{x + turn*0.55, yOut, 0},
-		{x - turn*0.2, yOut, 0},
-		{(x + xHome) / 2, yOut, 0},
-		{xHome, yOut, 0},
-	}
-	return sampleCR3(way, 96)
-}
-
 // sampleCR3 walks a Catmull-Rom spline through waypoints, densely enough that
 // crossing detection reads the curve rather than the chords between points.
 func sampleCR3(w []V3, n int) []V3 {
@@ -220,7 +203,7 @@ func Project(cords []Cord, w, h float64) []spec.Segment {
 	}
 
 	var out []spec.Segment
-	const halo = 7 // samples either side of a crossing that share its paint order
+	const halo = 9 // samples either side of a crossing that share its paint order
 
 	for ci, c := range cords {
 		sort.Slice(cuts[ci], func(a, b int) bool { return cuts[ci][a].i < cuts[ci][b].i })
@@ -245,7 +228,7 @@ func Project(cords []Cord, w, h float64) []spec.Segment {
 			if k == len(order) || order[k] != order[start] {
 				// Overlap generously: adjacent pieces must share enough length
 				// that no seam is visible where paint order changes.
-				const lap = 4
+				const lap = 6
 				lo, hi := start-lap, k+lap
 				if lo < 0 {
 					lo = 0

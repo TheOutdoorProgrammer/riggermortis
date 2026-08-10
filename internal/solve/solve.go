@@ -137,6 +137,7 @@ func Geometry(r *spec.Record) *spec.Geometry {
 	}
 
 	g := &spec.Geometry{Width: width, Height: height, Cords: []string{"a", "b"}}
+	s1, s2, isBend := bendSigns(k.Crossings)
 
 	for i, st := range r.Stages {
 		stage := st.ID
@@ -152,19 +153,24 @@ func Geometry(r *spec.Record) *spec.Geometry {
 		if len(upto) == 0 {
 			upto = k.Crossings[:1]
 		}
+		tight := k.Tighten > 0 && stage >= k.Tighten
 
-		l := rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
-			Tail: 150, Flare: 40, Stub: 60}
-		cords := rope.Build(l)
+		var cords []rope.Cord
+		if isBend {
+			cords = rope.BuildBend(s1, s2, len(upto), tight)
+		} else {
+			l := rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
+				Tail: 150, Flare: 40, Stub: 60}
+			cords = rope.Build(l)
 
-		// Every stage settles a little so the cord hangs rather than tracing a
-		// perfect helix. The stage that pulls settles hard, and that is where a
-		// reef lying flat and a granny cocking over become visibly different.
-		settle := rope.Settle{Iterations: 40, Diameter: 30, Tension: 0.12, Stiffness: 0.16}
-		if k.Tighten > 0 && stage >= k.Tighten {
-			settle = rope.Settle{Iterations: 160, Diameter: 30, Tension: 0.55, Stiffness: 0.18}
+			// Every stage settles a little so the cord hangs rather than
+			// tracing a perfect helix. The stage that pulls settles hard.
+			settle := rope.Settle{Iterations: 40, Diameter: 30, Tension: 0.12, Stiffness: 0.16}
+			if tight {
+				settle = rope.Settle{Iterations: 160, Diameter: 30, Tension: 0.55, Stiffness: 0.18}
+			}
+			rope.Relax(cords, settle)
 		}
-		rope.Relax(cords, settle)
 
 		g.Stages = append(g.Stages, spec.StageGeometry{
 			Stage:    stage,
@@ -172,6 +178,15 @@ func Geometry(r *spec.Record) *spec.Geometry {
 		})
 	}
 	return g
+}
+
+// bendSigns detects two half knots: four crossings in two same-signed pairs.
+// That family gets rope.BuildBend's authored layout instead of the helix.
+func bendSigns(cs []Crossing) (s1, s2 int, ok bool) {
+	if len(cs) != 4 || cs[0].Sign != cs[1].Sign || cs[2].Sign != cs[3].Sign {
+		return 0, 0, false
+	}
+	return cs[0].Sign, cs[2].Sign, true
 }
 
 // twists collapses a run of same-handed crossings into one twist, which is
