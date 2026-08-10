@@ -6,8 +6,9 @@ Everything here is written to be argued with.
 
 Every field is documented, every kind carries a definition of what it *is* and what does **not** belong in it, and every closed vocabulary is an enumeration registered in one place.
 
-Two conventions run through the whole document:
+Three principles run through the whole document:
 
+- **The spec is vendor neutral.** Line is line, hooks are hooks. What a thing is made of and how it behaves is normative; who sold it is not.
 - **Free text is the exception, not the default.** If a field can be an enum, it is one. Free strings are reserved for names, prose, and notes.
 - **Nothing claims to be true without saying how it was checked.** Every record carries a `validation` block recording the method, not merely a boolean.
 
@@ -66,6 +67,42 @@ Two mitigations, both enforced:
 `kind` duplicating the directory is intentional.
 Records get bundled, exported as one JSON blob, and passed around individually, all of which lose directory context.
 A self-describing record survives that.
+
+### Vendor neutrality
+
+**No brand, manufacturer, product line, or model name appears in any normative field.**
+
+A rig calls for a circle hook with an eleven millimetre gap, ten pound braid, and a half ounce egg sinker.
+It never calls for a named product.
+
+The reason is not squeamishness about commerce, it is that a trade label carries no information.
+Research on this domain established that size labels are unstandardised across manufacturers *and* across patterns within one manufacturer: a 2/0 octopus hook is not a 2/0 worm hook, and one maker's size 3 split ring is rated near 25 lb where its own 3H is near 65 lb.
+
+An earlier draft responded to that by making `manufacturer` a **required** field, so a label could at least be disambiguated.
+That was working around the problem instead of removing it.
+The brand was only ever a proxy for a physical property, so the spec records the **property itself** and the proxy becomes unnecessary:
+
+| Instead of | Record |
+| --- | --- |
+| size 3 split ring | `rating_lb: 25` |
+| 2/0 octopus hook | `gap_mm: 11`, `point_style: turned-in`, `shank: short` |
+| 10 lb fluorocarbon | `material: fluoro`, `test_lb: 10`, `diameter_mm: 0.285` |
+| 1/2 oz egg sinker | `mass_oz: 0.5`, `mounting: threaded` |
+
+Two consequences fall out, both good.
+Comparability stops being a hazard, because nothing compares labels any more.
+And the dataset works anywhere, since an angler holding entirely different brands still has a circle hook with a measurable gap.
+
+**Enforcement is structural rather than a lint rule.** There is no field to put a brand in. With `additionalProperties: false` set everywhere, a record that tries is rejected by the validator rather than caught in review.
+
+Three carve-outs, stated explicitly so they do not read as leaks:
+
+1. **Sources name their authors.** A citation that concealed its publisher would not be a citation. `reliability` may even turn on it, since a maker documenting their own product is a strong source.
+2. **Aliases may record a trademarked common name.** Recording that some people say "Alabama Rig" is how a search for that term reaches the generic umbrella rig entry. It is never the canonical name, and it always carries a `trademark_note`. Naming a mark in order to avoid using it is the opposite of vendor specificity.
+3. **`validation_method: manufacturer-confirmed`** describes where evidence came from, not what to buy.
+
+Free-text fields such as `name`, `notes`, `prose` and `cadence` can still smuggle a brand in.
+Nothing mechanical catches that, so it is a review responsibility and rule 22 states it.
 
 ### Units
 
@@ -162,7 +199,10 @@ This section is the source of truth from which the JSON Schema is generated, so 
 | Enum | Values |
 | --- | --- |
 | `mounting` | `tied`, `threaded` |
-| `size_system` | `aught`, `wire-size`, `ounce`, `gram`, `swivel-number`, `split-ring-number`, `metric-mm`, `manufacturer` |
+| `variant_axis` | `mass_oz`, `mass_g`, `gap_mm`, `diameter_mm`, `rating_lb`, `length_mm`, `supports_g` |
+| `point_style` | `straight`, `turned-in`, `turned-out`, `knife-edge`, `needle` |
+| `shank` | `short`, `standard`, `long`, `extra-long` |
+| `bend_style` | `round`, `octopus`, `circle`, `worm`, `ewg`, `kahle`, `aberdeen`, `siwash`, `treble` |
 | `line_material` | `mono`, `fluoro`, `braid`, `wire`, `backing`, `leader-mono`, `leader-fluoro` |
 | `stretch` | `low`, `medium`, `high` |
 | `density` | `sinking`, `neutral`, `floating` |
@@ -248,12 +288,29 @@ pins:
   - {id: eye-a, type: closed-eye, wire_diameter_mm: 0.9}
   - {id: eye-b, type: closed-eye, wire_diameter_mm: 0.9}
 blocks_passage: true
-sizes:
-  - {system: swivel-number, label: "7",  manufacturer: rosco, rating_lb: 55}
-  - {system: swivel-number, label: "10", manufacturer: rosco, rating_lb: 35}
+variants:
+  axis: rating_lb
+  values: [25, 35, 55, 80, 130]
 validation:
   status: unvalidated
   events: []
+```
+
+```yaml
+kind: component
+schema_version: 0
+id: hook.circle
+name: Circle hook
+mounting: tied
+bend_style: circle
+point_style: turned-in
+shank: short
+pins:
+  - {id: eye, type: closed-eye, wire_diameter_mm: 1.1}
+blocks_passage: true
+variants:
+  axis: gap_mm
+  values: [6, 8, 11, 14, 18, 23, 30]
 ```
 
 | Field | Type | Required | Meaning |
@@ -264,14 +321,19 @@ validation:
 | `pins[].wire_diameter_mm` | number | no | Physical gauge of the eye. Feeds knot-fit warnings. |
 | `blocks_passage` | bool | yes | Whether something threaded on the line is stopped here. **Validator-only.** Makes the sliding-weight check decidable. |
 | `bore_mm` | number | threaded only | Largest thing that can pass through. **Validator-only.** |
-| `sizes[].system` | `size_system` | yes | Which sizing system the label belongs to. |
-| `sizes[].label` | string | yes | The printed label, as a **string**. `"1/2"` and `"3H"` are not numbers. |
-| `sizes[].manufacturer` | string | conditional | Required whenever the system is manufacturer-specific, which is most of them. |
-| `sizes[].rating_lb` | number | no | The **only** field comparable across brands. |
+| `bend_style` | `bend_style` | hooks only | The hook's geometry family. This, not a trade name, is what distinguishes a circle from an EWG. |
+| `point_style` | `point_style` | hooks only | Where the point aims. Determines hooking behaviour. |
+| `shank` | `shank` | hooks only | Relative shank length. |
+| `variants.axis` | `variant_axis` | yes | The **physical quantity** along which this component varies. Never a trade label. |
+| `variants.values` | list of numbers | yes | The values the component is commonly available in, in the axis's units. |
 | `former_ids` | list | no | Previous IDs, for reference migration. |
 
-Size labels are not comparable across manufacturers, and often not within one.
-A 2/0 octopus hook is not a 2/0 worm hook, and Rosco's own size 3 split ring is rated near 25 lb where its 3H is near 65 lb.
+A component record describes a **type**, and a rig instantiates it with a value from that type's axis: `{ref: hook.circle, gap_mm: 11}`.
+This is the same idea as pattern parameters, applied one level down.
+
+Mapping a shop label such as "size 4/0" onto a gap in millimetres is a genuinely useful thing, and it is deliberately **not** in scope here.
+It is a shopping aid rather than a fact about a rig, it changes per manufacturer, and the charts that carry it are copyrighted catalogue content.
+If it is ever built it is a separate, clearly non-normative dataset with its own licensing position, and nothing in the spec depends on it.
 
 ---
 
@@ -294,7 +356,8 @@ properties:
   underwater_visibility: low
   knot_sensitivity: high
 diameters:
-  - {test_lb: 10, diameter_mm: 0.285, manufacturer: seaguar, source: src.example}
+  - {test_lb: 10, diameter_mm: 0.285, source: src.example}
+  - {test_lb: 20, diameter_mm: 0.405, source: src.example}
 validation: {status: unvalidated, events: []}
 ```
 
@@ -304,7 +367,7 @@ validation: {status: unvalidated, events: []}
 | `properties.knot_sensitivity` | `knot_sensitivity` | yes | How much the material punishes a poorly chosen knot. Fluorocarbon and braid are both `high` for different reasons, which is what makes rule 16 worth having. |
 | `diameters[].test_lb` | number | yes | Stated strength on the label. |
 | `diameters[].diameter_mm` | number | yes | Actual measured diameter. Feeds rule 3. |
-| `diameters[].manufacturer` | string | yes | Required. Diameter per stated test is **not** standardised. |
+| `diameters[].source` | ref | yes | Required. Diameter per stated test is **not** standardised, so every pairing is a sourced measurement rather than a fact about the material. Where sources disagree, both rows exist and `rank` separates them. |
 
 ---
 
@@ -440,12 +503,12 @@ schema_version: 0
 id: rig.carolina
 names: {canonical: Carolina rig, aliases: [C-rig]}
 nodes:
-  - {id: main,   type: line, role: main-line}
-  - {id: sinker, ref: weight.egg}
-  - {id: bead,   ref: bead.glass}
-  - {id: swivel, ref: swivel.barrel}
-  - {id: leader, type: line, role: leader, length_in: [12, 48]}
-  - {id: hook,   ref: hook.ewg}
+  - {id: main,   type: line, role: main-line, material: braid, test_lb: 30}
+  - {id: sinker, ref: weight.egg,    mass_oz: 0.5}
+  - {id: bead,   ref: bead.glass,    diameter_mm: 8}
+  - {id: swivel, ref: swivel.barrel, rating_lb: 55}
+  - {id: leader, type: line, role: leader, material: fluoro, test_lb: 15, length_in: [12, 48]}
+  - {id: hook,   ref: hook.ewg,      gap_mm: 14}
 edges:
   - {from: main,   to: sinker, rel: threaded, travel: {toward_rod: open, toward_terminal: swivel}}
   - {from: main,   to: bead,   rel: threaded, travel: {toward_rod: open, toward_terminal: swivel}}
@@ -797,7 +860,9 @@ notes: >
 | 19 | `source-corroborated` events require at least two distinct sources | error | A |
 | 20 | `validation.events` is append-only; rewriting history fails the diff check | error | A |
 | 21 | A knot's `line_types` should include the line type of the segment it ties on | warning | B |
-| 22 | Size labels are never compared numerically across manufacturers | error | A |
+| 22 | No brand, manufacturer, product line, or model name appears in a normative field. Structural for typed fields, since none exists to hold one; review-enforced for free text | error | A / B |
+| 31 | A component's `variants.axis` must be a physical quantity from `variant_axis`, never a trade label | error | A |
+| 32 | A value a rig selects must exist in the referenced component's `variants.values` | error | A |
 | 23 | Nothing publishes with `validation.status: unvalidated` | warning | B |
 | 24 | Patterns expand before rules 1 to 5 run, so a pattern can never hide a structural error | error | A |
 | 25 | Expanded node ids must not collide with declared ids, or with each other | error | A |

@@ -6,7 +6,7 @@
 
 ## Context and Problem Statement
 
-[`docs/schema-prototype.md`](../docs/schema-prototype.md) defines eight record kinds, roughly thirty enumerations, and thirty validation rules.
+[`docs/spec.md`](../docs/spec.md) defines eight record kinds, roughly thirty enumerations, and thirty validation rules.
 All of it is currently prose.
 Prose does not fail a build, so without machine enforcement the specification and the data will diverge, and the project's entire claim is that its data is verifiably correct.
 
@@ -121,5 +121,5 @@ Bad:
 
 ## More Information
 
-- Rules and enumerations: [`docs/schema-prototype.md`](../docs/schema-prototype.md).
+- Rules and enumerations: [`docs/spec.md`](../docs/spec.md).
 - Rejected here but relevant elsewhere: Rego and Open Policy Agent express cross-record relational rules declaratively and would suit rules 2, 5, 8, 10, 13, 16 and 17 well. They are awkward for the graph traversals in rules 1 and 4, and adding a second policy runtime for a subset of the rules is not justified at this size. Worth revisiting if the relational rule set outgrows readable Go.

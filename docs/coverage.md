@@ -243,7 +243,7 @@ This is the highest-leverage block in the entire project and should be authored 
 | Wire | ☐ | ☐ | Crimped, not tied. |
 | Leader material | ☐ | ☐ | May be a variant of mono or fluoro rather than its own record. |
 
-Diameter per stated test is **not** standardised, so every entry needs a `manufacturer` and a source.
+Diameter per stated test is **not** standardised, so every `test_lb` to `diameter_mm` pairing is a sourced measurement rather than a property of the material.
 
 ---
 

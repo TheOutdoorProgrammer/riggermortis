@@ -147,10 +147,16 @@ Tracked as ADRs in [`adr/`](adr/) as they are settled.
 ```text
 riggermortis/
 ├── adr/              # MADR decision records
-├── data/             # Rig, knot, and component records (schema TBD)
+├── data/             # Rig, knot, and component records
 └── docs/
+    ├── spec.md       # The data spec: kinds, enums, rules
+    ├── coverage.md   # What exists, what does not, what a human confirmed
     └── research/     # Cited source research behind the decisions above
 ```
+
+The spec is **vendor neutral**.
+Line is line, hooks are hooks.
+What a thing is made of and how it behaves is normative; who sold it is not.
 
 ---
 
