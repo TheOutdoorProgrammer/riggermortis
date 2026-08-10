@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: source
+schema_version: 0
+id: src.abok-general
+type: book
+title: The Ashley Book of Knots
+author: Clifford W. Ashley
+year: 1944
+license: all-rights-reserved
+copy_policy: cite-only
+reliability: high
+notes: >
+  Copyright renewed in 1971 and protected until 2040. Reference numbers may be
+  cited; text and illustrations may never be reproduced.

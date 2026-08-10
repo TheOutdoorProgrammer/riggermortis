@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: knot
+schema_version: 0
+id: knot.palomar
+
+names:
+  canonical: Palomar knot
+  aliases: [Palomar]
+
+abok_ref: null
+
+role: terminal
+
+connects:
+  from: line-end
+  to: [closed-eye, split-ring]
+
+line_types: [mono, fluoro, braid]
+
+objects:
+  - {ref: HookEye.1, pin_type: closed-eye}
+
+# Doubling the line through the eye means the hook passes over the whole knot,
+# so the eye never bears on a single strand. That is why it survives braid.
+stages:
+  - id: 1
+    actions:
+      - {verb: MB, subject: RP, names: BT.1, length_mm: 150}
+    prose: Double roughly six inches of line back on itself to form a bight.
+    notation: "* MB(RP=BT.1), LG(BT.1:150mm)"
+
+  - id: 2
+    actions:
+      - {verb: RV, subject: BT.1, through: HookEye.1, direction: F-A, force: push}
+    prose: Pass the doubled bight through the hook eye.
+    notation: "* RV(^BT.1, HookEye.1:F-A)"
+
+  - id: 3
+    actions:
+      - {verb: ML, subject: [BT.1, SP], chirality: "/", names: LP.1}
+      - {verb: RV, subject: E.BT.1, through: LP.1, direction: U-D}
+    prose: Tie a loose overhand knot with the doubled line, leaving the hook hanging below.
+    notation: "* ML(/[BT.1, SP]=LP.1), RV(E.BT.1, LP.1:U-D)"
+
+  - id: 4
+    actions:
+      - {verb: MV, subject: BT.1, over: Hook.1, direction: D, force: pull}
+    prose: Pass the loop of the bight down over the hook so it encircles the whole hook.
+    notation: "* MV(BT.1^, Hook.1:D)"
+
+  - id: 5
+    actions:
+      - {verb: MV, subject: [SP, E.RP], force: pull, wet: true}
+    prose: Moisten, then draw the standing line and tag together so the knot seats against the eye.
+    notation: "* MV([SP, E.RP]^)"
+
+strength:
+  claims:
+    - residual_pct: null
+      line: braid
+      n: 0
+      note: Widely reported as one of the strongest terminal knots in braid. No citable figure yet, since published tests are single-sample.
+      source: src.needs-citation
+      tier: C
+      rank: normal
+
+failure_modes:
+  - Loop not passed fully over the hook, leaving it caught on the point or barb, which fails at a fraction of line strength.
+  - Drawn down dry, burning monofilament.
+  - Tag trimmed flush, allowing the knot to work loose in braid. Leave a short tag.
+
+validation:
+  status: unvalidated
+  events: []

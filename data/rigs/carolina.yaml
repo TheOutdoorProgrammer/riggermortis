@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: rig
+schema_version: 0
+id: rig.carolina
+
+names:
+  canonical: Carolina rig
+  aliases: [C-rig]
+
+nodes:
+  - {id: main, type: line, role: main-line, material: braid, breaking_load_kg: 13.6}
+  - {id: sinker, ref: weight.egg, mass_g: 14.2}
+  - {id: bead, ref: bead.glass, diameter_mm: 8}
+  - {id: swivel, ref: swivel.barrel, rating_kg: 25}
+  - {id: leader, type: line, role: leader, material: fluoro, breaking_load_kg: 6.8, length_mm: [305, 1220]}
+  - {id: hook, ref: hook.offset-worm, gap_mm: 14}
+  - {id: bait, ref: bait.stick-worm, length_mm: 125}
+
+edges:
+  # Bead sits between sinker and swivel so the lead never hammers the knot.
+  - from: main
+    to: sinker
+    rel: threaded
+    travel: {toward_rod: open, toward_terminal: swivel}
+  - from: main
+    to: bead
+    rel: threaded
+    travel: {toward_rod: sinker, toward_terminal: swivel}
+
+  - {from: main, to: swivel, rel: tied, knot: knot.palomar, pin: eye-a}
+  - {from: swivel, to: leader, rel: tied, knot: knot.palomar, pin: eye-b}
+  - {from: leader, to: hook, rel: tied, knot: knot.palomar, pin: eye}
+  - {from: hook, to: bait, rel: rigged, rigging: rigging.texposed}
+
+failure_modes:
+  - Bead omitted, letting the sinker beat directly on the swivel knot until it fails.
+  - Leader too short to let the bait fall naturally behind the weight, which is the entire point of the rig.
+  - Sinker bore smaller than the main line diameter, which frays the line where it rides.
+
+validation:
+  status: unvalidated
+  events: []

@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: component
+schema_version: 0
+id: swivel.barrel
+name: Barrel swivel
+mounting: tied
+blocks_passage: true
+pins:
+  - {id: eye-a, type: closed-eye, wire_diameter_mm: 0.9}
+  - {id: eye-b, type: closed-eye, wire_diameter_mm: 0.9}
+variants:
+  axis: rating_kg
+  values: [11, 16, 25, 36, 59]
+validation:
+  status: unvalidated
+  events: []

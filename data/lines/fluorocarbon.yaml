@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: line
+schema_version: 0
+id: line.fluorocarbon
+name: Fluorocarbon
+material: fluoro
+properties:
+  stretch: low
+  density: sinking
+  abrasion_resistance: high
+  underwater_visibility: low
+  knot_sensitivity: high
+diameters:
+  - {breaking_load_kg: 4.5, diameter_mm: 0.285, source: src.needs-citation}
+  - {breaking_load_kg: 6.8, diameter_mm: 0.330, source: src.needs-citation}
+  - {breaking_load_kg: 9.1, diameter_mm: 0.405, source: src.needs-citation}
+validation:
+  status: unvalidated
+  events: []

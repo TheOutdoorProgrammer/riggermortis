@@ -242,7 +242,8 @@ This section is the source of truth from which the JSON Schema is generated, so 
 
 | Enum | Values |
 | --- | --- |
-| `mounting` | `tied`, `threaded` |
+| `mounting` | `tied`, `threaded`, `rigged` |
+| `caution_severity` | `advisory`, `strong`, `do-not-use` |
 | `unit` | `mm`, `m`, `g`, `kg`, `c`, `s`, `deg` |
 | `variant_axis` | `mass_g`, `gap_mm`, `diameter_mm`, `rating_kg`, `breaking_load_kg`, `length_mm`, `supports_g` |
 | `point_style` | `straight`, `turned-in`, `turned-out`, `knife-edge`, `needle` |
@@ -364,7 +365,9 @@ variants:
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `mounting` | `mounting` | yes | `tied` if it connects through a pin, `threaded` if it rides on a line segment instead. This single field separates a swivel from a sinker and determines which edge types are legal. |
+| `mounting` | `mounting` | yes | `tied` connects through a pin, `threaded` rides on a line segment, `rigged` is a soft body mounted on a hook by a procedure. This single field separates a swivel from a sinker from a worm, and determines which edge types are legal. |
+| `soft` | bool | no | Whether the body can be pierced. Gates `landmarks` and makes `rel: rigged` legal against it. |
+| `landmarks` | map | soft only | Named positions along the body, normalised from 0 at the nose to 1 at the tail. A `rigging` addresses these. |
 | `pins[].id` | string | yes | Local identifier, referenced by rig edges. |
 | `pins[].type` | `pin_type` | yes | A knot must declare this type in `connects.to` to be legal here. |
 | `pins[].wire_diameter_mm` | number | no | Physical gauge of the eye. Feeds knot-fit warnings. |
@@ -446,20 +449,31 @@ Note which layer each verb serves.
 `GP` grips with a hand, generating **prose** but no geometry.
 `ML`, `MT`, `RV` and `MB` manipulate cord, generating **geometry**.
 
-### `role` is what makes a knot placeable
+### Arity is what makes a knot placeable
 
-This is the fix for the dropper loop.
+An earlier draft made this a property of `role`: terminal and bend knots were edges, loop and stopper knots were nodes.
+Authoring a drop shot broke that.
 
-| Role | Joins | Appears in a rig as |
+A drop shot ties a Palomar to the hook and leaves a long tag that carries the weight, so the same Palomar that is an edge in a Texas rig has **three** connection points here: the main line, the hook eye, and the tag continuing down. Role has not changed; the number of things attached to it has.
+
+**The rule is arity, and role only predicts it:**
+
+| Connection points | Placement |
+| --- | --- |
+| 2 | an **edge** carrying `knot:` |
+| 3 or more | a **node** whose `ref` is the knot |
+
+| Role | Joins | Usual arity |
 | --- | --- | --- |
-| `terminal` | line end to a hardware pin | an **edge** |
-| `bend` | two line ends | an **edge** |
-| `loop` | tied *within* one line, producing a branch | a **node** with pins `in`, `out`, `loop` |
-| `stopper` | tied *on* one line, blocking passage | a **node** with pins `in`, `out` |
-| `arbor` | line to a reel spool | an **edge**, terminal at the reel |
+| `terminal` | line end to a hardware pin | 2, but 3 when a tag is load-bearing |
+| `bend` | two line ends | 2 |
+| `loop` | tied *within* one line, producing a branch | 3: `in`, `out`, `loop` |
+| `stopper` | tied *on* one line, blocking passage | 2, but a node because it blocks passage |
+| `arbor` | line to a reel spool | 2 |
 
-A `loop` knot is structurally a three-pin component made of line.
-That unification is what lets a high-low rig and a Sabiki exist at all, and it means `blocks_passage` applies to knots-as-nodes exactly as it does to components.
+A knot acting as a node is structurally a component made of line, so `blocks_passage` applies to it exactly as it does to hardware.
+
+An edge leaving a knot node carries **no `knot:` reference**, because the node is already the knot. The pin names which part of it: `in`, `out`, `loop`, `tag`, or `eye`.
 
 ```yaml
 kind: knot
@@ -528,9 +542,13 @@ validation: {status: unvalidated, events: []}
 | `actions[].wet` | bool | no | Structured rather than buried in prose, because it materially affects the result. |
 | `stages[].prose` | string | yes | Human instruction. Authored, see open questions. |
 | `stages[].notation` | string | derived | Emitted from the structured actions. Never hand-edited; CI regenerates and diffs it. |
-| `strength.claims[].n` | int | yes | Sample size. **Required.** Most published knot tests are n=1. |
+| `strength.claims[].n` | int | yes | Sample size. **Required.** Most published knot tests are n=1, and `n: 0` with a null `residual_pct` is the legitimate way to say "no number is published here, and here is why." |
+| `strength.claims[].note` | string | no | Why a figure is absent, or what qualifies it. |
 | `strength.claims[].tier` | `tier` | yes | Always `C`. |
 | `strength.claims[].rank` | `rank` | yes | |
+| `stages[].descriptors` | list | no | Suber descriptors such as `PL` parallel or `CO` crosses-over. Assertions about state rather than motions. A stage may hold only descriptors. |
+| `cautions` | list | no | Structured warnings, each with a `caution_severity`, a note, and sources. A `do-not-use` caution is rendered prominently and is how the reference says "this knot exists and you should not use it for this." |
+| `failure_modes` | list | no | How the knot goes wrong in practice. |
 
 ---
 
@@ -784,6 +802,7 @@ Same graph, same pin vocabulary, no schema change.
 | --- | --- | --- | --- |
 | `names.trademark_note` | string | conditional | Required whenever any alias is a registered mark. |
 | `variant_of` | ref | no | The rig this is a regional or minor variant of, after the accepted-name and synonym model. Prevents near-duplicates drifting apart. |
+| `failure_modes` | list | no | How the assembled rig goes wrong. Distinct from a technique's failure modes, which are about fishing it rather than building it. |
 | `legality` | object | conditional | Required for any rig carrying more than three hooks, or with a known jurisdictional restriction. |
 | `legality.general_warning` | bool | yes | Whether the interface surfaces a check-your-regulations notice. |
 | `legality.restrictions[]` | list | no | Per-jurisdiction rules. Always `tier: C`, always sourced. Never presented as legal advice. |
@@ -804,9 +823,11 @@ Same graph, same pin vocabulary, no schema change.
 
 **Why it exists.** Rigs repeat themselves constantly, and spelling the repetition out longhand is copy-paste inside data, which is the thing that rots first. A Sabiki is six identical dropper-and-hook units. An umbrella rig is five identical arm-and-jighead units. A spreader bar, a daisy chain, a crappie spider rig and a high-low are all the same shape at different counts. Written out, a Sabiki is roughly twenty near-identical nodes; as a pattern it is four lines.
 
-**What belongs here.** Any fragment that appears more than twice, either within one record or across several.
+**What belongs here.** Any multi-action fragment that appears more than once, either within one record or across several.
 
-**What does not.** A fragment used once. Indirection has a readability cost and a single use never pays it.
+An earlier draft said "more than twice." Authoring the double uni disproved it: that knot is one uni tied twice facing opposite ways, and writing it out longhand duplicates four stages for no reason. Twice is already duplication when the fragment has more than one action in it.
+
+**What does not.** A fragment used once, or a single action repeated, which is what `repeat` is for. Indirection has a readability cost and neither of those pays it.
 
 ### Two homes, one shape
 
@@ -1061,6 +1082,12 @@ notes: >
 | 31 | A component's `variants.axis` must be a physical quantity from `variant_axis`, never a trade label | error | A |
 | 32 | A value a rig selects must exist in the referenced component's `variants.values` | error | A |
 | 33 | Every quantity field carries an SI suffix from the `unit` enum. Non-SI suffixes such as `_lb`, `_oz`, `_in`, `_ft` are rejected unless registered in the exception table, which is currently empty | error | A |
+| 35 | A knot with three or more connection points in a given rig must appear as a node, never an edge | error | A |
+| 36 | An edge leaving a knot node must not carry a `knot:` reference | error | A |
+| 37 | `rel: rigged` requires the target component to have `soft: true` | error | A |
+| 38 | A `rigging` address must resolve to a declared landmark or a position in `[0, 1]` | error | A |
+| 39 | A `do-not-use` caution requires at least one source | error | A |
+| 40 | Records referencing `src.needs-citation` are counted and reported as outstanding citation debt | warning | B |
 | 34 | Quantity values must fall in a plausible range for their unit, catching unconverted imperial figures entered by mistake | warning | B |
 | 23 | Nothing publishes with `validation.status: unvalidated` | warning | B |
 | 24 | Patterns expand before rules 1 to 5 run, so a pattern can never hide a structural error | error | A |

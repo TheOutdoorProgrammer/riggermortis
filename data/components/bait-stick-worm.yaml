@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: component
+schema_version: 0
+id: bait.stick-worm
+name: Stick worm
+mounting: rigged
+soft: true
+body_profile: straight
+blocks_passage: false
+pins: []
+landmarks:
+  nose: 0.00
+  collar: 0.08
+  egg-sack: 0.45
+  tail: 1.00
+variants:
+  axis: length_mm
+  values: [100, 125, 150, 180]
+validation:
+  status: unvalidated
+  events: []

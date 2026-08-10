@@ -34,7 +34,7 @@ A record can pass CI and still be wrong. **Data ☑ with Field ☐ means "struct
 
 | Knot | Also known as | Data | Draw | Field | Notes |
 | --- | --- | --- | --- | --- | --- |
-| **Palomar** | | ☐ | ☐ | ☐ | Doubled line through an eye. Core specimen. |
+| **Palomar** | | ☑ | ☐ | ☐ | Doubled line through an eye. Core specimen. |
 | **Improved clinch** | fisherman's knot | ☐ | ☐ | ☐ | Wraps plus tuck. Tests `repeat` range 5–7. |
 | Clinch | | ☐ | ☐ | ☐ | Variant of the above; candidate `variant_of`. |
 | Trilene | double-loop clinch | ☐ | ☐ | ☐ | Two passes through the eye. |
@@ -56,7 +56,7 @@ A record can pass CI and still be wrong. **Data ☑ with Field ☐ means "struct
 | Knot | Also known as | Data | Draw | Field | Notes |
 | --- | --- | --- | --- | --- | --- |
 | **FG knot** | | ☐ | ☐ | ☐ | Braid to fluoro, **no hardware**. Repeated weave; the specimen that motivated `patterns`. |
-| **Double uni** | | ☐ | ☐ | ☐ | Two unis facing each other. |
+| **Double uni** | | ☑ | ☐ | ☐ | Two unis facing each other. Exercises `patterns` in a knot. |
 | **Blood knot** | barrel knot | ☐ | ☐ | ☐ | Similar diameters only. |
 | **Surgeon's knot** | double/triple surgeon's | ☐ | ☐ | ☐ | Tests `repeat` on turns. |
 | Alberto | crazy Alberto | ☐ | ☐ | ☐ | |
@@ -95,7 +95,7 @@ A record can pass CI and still be wrong. **Data ☑ with Field ☐ means "struct
 | Rig | Also known as | Data | Draw | Field | Notes |
 | --- | --- | --- | --- | --- | --- |
 | **Texas rig** | T-rig | ☐ | ☐ | ☐ | Pegged vs free-sliding bullet weight. |
-| **Carolina rig** | C-rig | ☐ | ☐ | ☐ | Sliding weight + stopper. Core specimen. |
+| **Carolina rig** | C-rig | ☑ | ☐ | ☐ | Sliding weight + stopper. Core specimen. |
 | **Drop shot** | | ☐ | ☐ | ☐ | Hook mid-line, tag end below. |
 | **Ned rig** | | ☐ | ☐ | ☐ | Simplest possible: jighead + plastic. |
 | **Wacky rig** | | ☐ | ☐ | ☐ | Hook through the middle; O-ring variant. |

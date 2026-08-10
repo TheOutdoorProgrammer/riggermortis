@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: knot
+schema_version: 0
+id: knot.double-uni
+
+names:
+  canonical: Double uni knot
+  aliases: [uni to uni, double grinner]
+
+abok_ref: null
+
+role: bend
+
+connects:
+  from: line-end
+  to: [line-end]
+
+line_types: [mono, fluoro, braid, leader-mono, leader-fluoro]
+
+# The knot is one uni tied twice, facing opposite ways, so the procedure is
+# authored once and expanded twice. Reuse rather than repetition, which is why
+# count is 1 on each expansion.
+patterns:
+  uni-half:
+    target: knot
+    params:
+      - {name: cord, type: string, required: true}
+      - {name: other, type: string, required: true}
+      - {name: wraps, type: range, required: true}
+    stages:
+      - actions:
+          - {verb: MB, subject: "E.{cord}", names: "BT.{cord}"}
+        prose: Fold the tag back over both lines to form a loop.
+      - actions:
+          - verb: MT
+            subject: "E.{cord}"
+            around: ["{cord}", "{other}"]
+            rotation: CW
+            repeat: "{wraps}"
+        prose: Wrap the tag around both lines, working back toward the loop.
+      - actions:
+          - {verb: RV, subject: "E.{cord}", through: "BT.{cord}", direction: F-A}
+        prose: Pass the tag out through the loop you formed.
+      - actions:
+          - {verb: MV, subject: "E.{cord}", force: pull, wet: true}
+        prose: Moisten and draw the tag to snug this half down onto both lines.
+
+stages:
+  - id: 1
+    actions:
+      - {verb: MV, subject: [C.1, C.2], direction: F}
+    descriptors:
+      - {desc: PL, subject: C.1, to: C.2}
+    prose: Overlap the two lines side by side and facing opposite directions, with roughly six inches of overlap.
+    notation: "* PL(C.1, C.2), LG(overlap:150mm)"
+
+  - id: 2
+    expand: {pattern: uni-half, count: 1, with: {cord: C.1, other: C.2, wraps: [5, 7]}}
+
+  - id: 3
+    expand: {pattern: uni-half, count: 1, with: {cord: C.2, other: C.1, wraps: [5, 7]}}
+
+  - id: 4
+    actions:
+      - {verb: MV, subject: [SP.C1, SP.C2], force: pull}
+    prose: Pull both standing lines apart to slide the two knots together until they seat against each other.
+    notation: "* MV([SP.C1, SP.C2]^)"
+
+strength:
+  claims:
+    - residual_pct: null
+      line: mono
+      n: 0
+      note: >
+        No figure published here yet. Popular knot tests for this knot are
+        almost universally single-sample and are not citable under rule 11.
+      source: src.needs-citation
+      tier: C
+      rank: normal
+
+failure_modes:
+  - Too few wraps, which is the usual cause of a pull-out. Braid is slicker than mono and wants the top of the range or more.
+  - Drawn down dry, which burns and weakens monofilament.
+  - Joining lines of very unequal diameter, where the thin side cuts into the thick side. Past roughly a threefold difference this is the wrong knot.
+
+validation:
+  status: unvalidated
+  events: []

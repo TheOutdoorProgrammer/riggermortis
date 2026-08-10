@@ -1,0 +1,93 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: knot
+schema_version: 0
+id: knot.square
+
+names:
+  canonical: Square knot
+  aliases: [reef knot, Hercules knot]
+
+# UNVERIFIED. The reef knot has an Ashley number and it is not asserted here
+# from memory. Fill in only from the book itself, and cite nothing else for it.
+abok_ref: null
+
+role: bend
+
+connects:
+  from: line-end
+  to: [line-end]
+
+# Deliberately empty. There is no fishing line material this is appropriate on,
+# and listing one would imply otherwise. See cautions.
+line_types: []
+
+cautions:
+  - severity: do-not-use
+    note: >
+      This is a binding knot, not a bend. It holds when both standing parts are
+      loaded symmetrically against a solid object, which is not how a fishing
+      line is ever loaded. Under an asymmetric pull it capsizes into a pair of
+      slipping half hitches and runs off the end of the line.
+    sources: [src.abok-general]
+  - severity: do-not-use
+    note: >
+      Slick monofilament and fluorocarbon make the failure faster, not slower.
+      The knot depends on friction between two cords lying against each other,
+      and low-friction line removes exactly that.
+    sources: [src.abok-general]
+
+strength:
+  claims:
+    - residual_pct: null
+      line: mono
+      n: 0
+      note: >
+        No residual strength figure is published here. The failure mode is
+        capsize and slip rather than breakage, so a percentage would misdescribe
+        what actually happens and imply the knot merely tests weak.
+      source: src.abok-general
+      tier: C
+      rank: normal
+
+# The square knot is two half knots of OPPOSITE handedness. Tie both the same
+# way and you have a granny knot, which is worse. That single difference is the
+# chirality flip between stage 1 and stage 3, and it is the whole knot.
+stages:
+  - id: 1
+    actions:
+      - {verb: ML, subject: [C.1, C.2], chirality: "/", names: LP.1}
+    prose: Cross the left end over the right, forming a crossing.
+    notation: "* ML(/[C.1, C.2]=LP.1)"
+
+  - id: 2
+    actions:
+      - {verb: RV, subject: E.C1, through: LP.1, direction: U-D}
+    prose: Tuck that end under and draw it through. This is the first half knot.
+    notation: "* RV(E.C1, LP.1:U-D)"
+
+  - id: 3
+    actions:
+      - {verb: ML, subject: [C.1, C.2], chirality: "\\", names: LP.2}
+    prose: Cross the ends again, this time the opposite way round.
+    notation: "* ML(\\[C.1, C.2]=LP.2)"
+
+  - id: 4
+    actions:
+      - {verb: RV, subject: E.C1, through: LP.2, direction: D-U}
+    prose: Tuck and draw through again to complete the second half knot.
+    notation: "* RV(E.C1, LP.2:D-U)"
+
+  - id: 5
+    actions:
+      - {verb: MV, subject: [SP.C1, SP.C2], force: pull}
+    prose: Draw both standing parts apart so the knot lies flat and symmetrical.
+    notation: "* MV([SP.C1, SP.C2]^)"
+
+failure_modes:
+  - Capsizes into two slipping half hitches under an asymmetric pull, then runs off the end. This is the normal outcome, not an edge case.
+  - Tied with both crossings the same handedness it becomes a granny knot, which slips sooner and jams when it does not.
+  - Cannot be trusted to hold at all in braid, which is slicker again than fluorocarbon.
+
+validation:
+  status: unvalidated
+  events: []

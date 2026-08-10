@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: rigging
+schema_version: 0
+id: rigging.texposed
+
+names:
+  canonical: Texposed
+  aliases: [Texas rigged weedless, tex-posed, skin hooked]
+
+weedless: true
+
+applies_to:
+  body_profile: [straight, curly-tail, creature, craw]
+  hook_bend: [offset-worm, ewg, straight-shank]
+
+stages:
+  - id: 1
+    actions:
+      - {verb: IN, at: n0.00, angle_deg: 90, roll_deg: 0, depth: 0.06}
+      - {verb: OUT, at: v0.06}
+    prose: Insert the point into the centre of the nose and bring it out through the belly about a quarter inch back.
+    notation: "IN n0.00 a90 r0 z0.06, OUT v0.06"
+
+  - id: 2
+    actions:
+      - {verb: SL, subject: bait, along: shank, until: eye}
+    prose: Slide the bait up the shank until the nose seats against the hook eye and covers the offset bend.
+    notation: "SL bait shank>eye"
+
+  - id: 3
+    actions:
+      - {verb: RO, subject: hook, relative_to: bait, angle_deg: 180}
+    prose: Rotate the hook 180 degrees so the point faces back toward the body.
+    notation: "RO hook/bait a180"
+
+  # Stage 4 pierces nothing. It exists because a bait that is not straight on
+  # the shank spins and twists line, and it is the step people skip.
+  - id: 4
+    descriptors:
+      - {desc: AL, subject: bait, against: shank}
+    prose: Lay the hook alongside the bait and check it hangs perfectly straight. If it bunches, back the point out and re-enter further forward.
+    notation: "AL bait/shank"
+
+  - id: 5
+    actions:
+      - {verb: IN, at: v0.30, angle_deg: 90, roll_deg: 0}
+      - {verb: BU, at: d0.30, depth: 0.01}
+    prose: Bring the point back through the body and bury it just under the skin on the back, so nothing protrudes.
+    notation: "IN v0.30 a90 r0, BU d0.30 z0.01"
+
+failure_modes:
+  - Bait bunched or curved on the shank, which makes it spin and twist the line. Stage 4 exists to prevent exactly this.
+  - Point buried too deep, which costs hooksets. Just under the skin is the target, not through the far side.
+  - Entry not centred in the nose, which makes the bait ride crooked no matter what stage 4 says.
+  - Re-entry point chosen without laying the hook alongside first, which is the same fault as skipping stage 4.
+
+validation:
+  status: unvalidated
+  events: []
