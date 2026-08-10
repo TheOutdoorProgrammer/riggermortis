@@ -65,6 +65,7 @@ A record can pass CI and still be wrong. **Data ☑ with Field ☐ means "struct
 | Yucatan knot | | ☐ | ☐ | ☐ | |
 | Nail knot | | ☐ | ☐ | ☐ | Needs a tool or tube as an external object. |
 | PR bobbin knot | | ☐ | ☐ | ☐ | Requires a bobbin; external-object stress case. |
+| Square knot | reef knot | ☑ | ☐ | ☐ | ⚠ **Documented as do-not-use.** A binding knot, not a bend; capsizes and runs off the end. Present so the reference can say so. |
 
 ### Loops and structure: knots as nodes
 
@@ -94,7 +95,7 @@ A record can pass CI and still be wrong. **Data ☑ with Field ☐ means "struct
 
 | Rig | Also known as | Data | Draw | Field | Notes |
 | --- | --- | --- | --- | --- | --- |
-| **Texas rig** | T-rig | ☐ | ☐ | ☐ | Pegged vs free-sliding bullet weight. |
+| **Texas rig** | T-rig | ☑ | ☐ | ☐ | Free-sliding bullet stopped by the hook itself. |
 | **Carolina rig** | C-rig | ☑ | ☐ | ☐ | Sliding weight + stopper. Core specimen. |
 | **Drop shot** | | ☐ | ☐ | ☐ | Hook mid-line, tag end below. |
 | **Ned rig** | | ☐ | ☐ | ☐ | Simplest possible: jighead + plastic. |
