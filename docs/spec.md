@@ -249,8 +249,9 @@ This section is the source of truth from which the JSON Schema is generated, so 
 | `shank` | `short`, `standard`, `long`, `extra-long` |
 | `bend_style` | `round`, `octopus`, `circle`, `worm`, `ewg`, `offset-worm`, `straight-shank`, `kahle`, `aberdeen`, `siwash`, `treble` |
 | `body_profile` | `straight`, `curly-tail`, `paddle-tail`, `creature`, `craw`, `fluke`, `tube`, `grub`, `worm-live`, `baitfish`, `cut` |
-| `landmark_surface` | `nose`, `back`, `belly`, `side`, `tail` |
-| `rig_verb` | **provisional**: `IN` insert, `OUT` exit, `SL` slide, `RO` rotate, `AL` align, `BU` bury, `TH` thread |
+| `landmark_surface` | `n` nose, `d` dorsal (back), `v` ventral (belly), `l` lateral (side), `t` tail |
+| `rig_verb` | `IN` insert, `OUT` exit, `TH` thread, `SL` slide, `RO` rotate, `SK` skin, `BU` bury |
+| `rig_descriptor` | `AL` aligned straight, `CE` centred |
 | `line_material` | `mono`, `fluoro`, `braid`, `wire`, `backing`, `leader-mono`, `leader-fluoro` |
 | `stretch` | `low`, `medium`, `high` |
 | `density` | `sinking`, `neutral`, `floating` |
@@ -585,7 +586,22 @@ An action names both a landmark and a **surface**, because "insert at the nose" 
 
 ### Texposed, worked
 
-> ⚠ **The verb vocabulary below is provisional.** Whether an established notation exists for piercing a soft body, and what to borrow from surgical suturing, textile stitch charts, or needle-insertion planning, is under research in [`docs/research/05-rigging-notation.md`](research/05-rigging-notation.md). The *structure* here is settled; the two-letter codes are not.
+### The notation
+
+No notation for this exists, in fishing or in any adjacent domain.
+That was established rather than assumed, and the search is recorded in [`docs/research/05-rigging-notation.md`](research/05-rigging-notation.md) with the reasoning in [ADR 0006](../adr/0006-rigging-notation.md).
+
+So it is invented, but assembled from proven pieces rather than from nothing:
+
+- **Grammar and architecture from [knitout](https://textiles-lab.github.io/knitout/knitout.html)**, the CMU Textiles Lab's machine-knitting format. `VERB DIRECTION LOCATION SUBJECT` ordering, a flat instruction list with no flow control, and surface-plus-index addressing.
+- **Geometry from needle-insertion planning.** Alterovitz's insertion plan of location, angle, bevel roll and depth maps onto bait rigging field for field, and closed a real hole: an earlier draft had position and depth but no **angle** and no **roll**, both of which decide where a point actually exits and whether it tracks straight.
+- **Verb-set scale from surgical gesture taxonomies.** JIGSAWS' 15 surgemes and the SAGES Delphi taxonomy's 24 gestures put the right granularity at roughly this size.
+
+**Addressing.** A location is a surface letter and a normalised position from 0 at the nose to 1 at the tail, so `v0.30` is the ventral surface thirty percent down the body. Normalised rather than absolute, so one record works on every bait length. Named landmarks resolve to positions, so `collar` and `n0.08` are the same place.
+
+**Two verbs are genuinely ours.** `SK` skin, passing tangentially just beneath a surface, and `BU` bury, terminating subsurface without exiting, have **no prior art in any domain examined**. Surgery names only one of them, and only because subcuticular closure needs it. They are recorded as inventions rather than borrowings, because that is the honest measure of the gap.
+
+**Extensions** use knitout's `x-` namespace, so a third party can add a verb without forking the spec.
 
 ```yaml
 kind: rigging
@@ -601,26 +617,31 @@ applies_to:
 stages:
   - id: 1
     actions:
-      - {verb: IN, at: nose, surface: nose, depth: 0.06}
-      - {verb: OUT, at: 0.06, surface: belly}
+      - {verb: IN,  at: n0.00, angle_deg: 90, roll_deg: 0, depth: 0.06}
+      - {verb: OUT, at: v0.06}
     prose: Insert the point into the centre of the nose and bring it out through the belly about a quarter inch back.
+    notation: "IN n0.00 a90 r0 z0.06, OUT v0.06"
   - id: 2
     actions:
-      - {verb: SL, subject: bait, along: shank, until: collar-at-eye}
+      - {verb: SL, subject: bait, along: shank, until: eye}
     prose: Slide the bait up the shank until the nose seats against the hook eye.
+    notation: "SL bait shank>eye"
   - id: 3
     actions:
       - {verb: RO, subject: hook, relative_to: bait, angle_deg: 180}
     prose: Rotate the hook 180 degrees so the point faces the body.
+    notation: "RO hook/bait a180"
   - id: 4
-    actions:
-      - {verb: AL, subject: bait, against: shank}
+    descriptors:
+      - {desc: AL, subject: bait, against: shank}
     prose: Lay the hook alongside the bait and check it hangs perfectly straight before piercing.
+    notation: "AL bait/shank"
   - id: 5
     actions:
-      - {verb: IN, at: 0.30, surface: belly}
-      - {verb: BU, at: 0.30, surface: back, depth: 0.01}
+      - {verb: IN, at: v0.30, angle_deg: 90, roll_deg: 0}
+      - {verb: BU, at: d0.30, depth: 0.01}
     prose: Bring the point back through the body and bury it just under the skin on the back.
+    notation: "IN v0.30 a90 r0, BU d0.30 z0.01"
 failure_modes:
   - Bait bunched or curved on the shank, which makes it spin and twist the line. Stage 4 exists to prevent this and is the step most often skipped.
   - Point buried too deep, which costs hooksets.
@@ -636,12 +657,18 @@ It is an action with no piercing in it, which is exactly the kind of step photo 
 | `weedless` | bool | yes | Whether the finished presentation hides the point. Drives cover suitability in a technique. |
 | `applies_to.body_profile` | list of `body_profile` | yes | Which bait shapes this works on. Mismatch is a hard error in a rig. |
 | `applies_to.hook_bend` | list of `bend_style` | yes | Which hook geometries this works on. |
-| `stages[].actions[].verb` | `rig_verb` | yes | **Provisional.** See the warning above. |
-| `actions[].at` | landmark or number | yes | A declared landmark name, or a normalised position from 0 at the nose to 1 at the tail. |
-| `actions[].surface` | `landmark_surface` | piercing verbs | Which face of the body. |
+| `stages[].actions[].verb` | `rig_verb` | yes | `IN`, `OUT`, `TH`, `SL`, `RO`, `SK`, `BU`. |
+| `actions[].at` | address | piercing verbs | Surface letter plus normalised position, such as `v0.30`. A declared landmark name resolves to one, so `collar` and `n0.08` are the same place. |
+| `actions[].angle_deg` | number | `IN`, `RO` | On `IN`, the entry angle against the surface, which decides where the point exits. On `RO`, the rotation applied. |
+| `actions[].roll_deg` | number | `IN` | Rotational orientation of the point about its own axis. A bevelled point tracks in the direction it faces, so this decides whether it runs true or wanders. |
 | `actions[].depth` | number | no | Normalised depth of travel through the body. |
-| `actions[].angle_deg` | number | RO only | Rotation in degrees. |
+| `stages[].descriptors` | list | no | Assertions rather than motions, from `rig_descriptor`. A stage may hold only descriptors, which is how the alignment check exists as a step. |
+| `stages[].notation` | string | derived | Emitted from the structured actions. Never hand-edited; CI regenerates and diffs it. |
 | `failure_modes` | list | no | How this presentation goes wrong. |
+| `x-*` | any | no | Extension namespace, after knitout. A third party may add fields here without forking, and the validator ignores them. |
+
+Scalar prefixes in the emitted notation are `a` angle, `r` roll, `z` depth.
+Depth is `z` rather than `d` because `d` already means the dorsal surface, and a notation that collides with itself is worse than a verbose one.
 
 ### In a rig
 
