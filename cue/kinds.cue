@@ -30,7 +30,7 @@ package riggermortis
 
 #Line: {
 	#Common
-	kind:     "line"
+	kind!:    "line"
 	name:     string
 	material: #LineMaterial
 	properties: {
@@ -105,7 +105,7 @@ package riggermortis
 
 #Knot: {
 	#Common
-	kind:  "knot"
+	kind!: "knot"
 	names: #Names
 	role:  #KnotRole
 	connects: {
@@ -123,7 +123,7 @@ package riggermortis
 
 #Rigging: {
 	#Common
-	kind:     "rigging"
+	kind!:    "rigging"
 	names:    #Names
 	weedless: bool
 	applies_to: {

@@ -18,29 +18,29 @@ package riggermortis
 }
 
 #Validation: {
-	status: #ValidationStatus
+	status!: #ValidationStatus
 	events: [...#ValidationEvent]
 }
 
 #ExternalId: {
-	catalog: #Catalog
+	catalog!: #Catalog
 	// Always a string. Catalogue identifiers carry prefixes, leading zeros
 	// and whole URIs, so a number would silently corrupt them.
-	id:      string
+	id!:     string
 	source?: #Id
 	rank?:   #Rank
 }
 
 #Common: {
-	schema_version: int & >=0
-	id:             #Id
-	validation:     #Validation
+	schema_version!: int & >=0
+	id!:             #Id
+	validation!:     #Validation
 	former_ids?: [...#Id]
 	external_ids?: [...#ExternalId]
 }
 
 #Names: {
-	canonical: string
+	canonical!: string
 	aliases?: [...string]
 	trademark_note?: string
 }

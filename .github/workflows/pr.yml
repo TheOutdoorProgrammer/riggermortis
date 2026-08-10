@@ -15,6 +15,8 @@ jobs:
       - uses: cue-lang/setup-cue@v1
       - name: Records match the spec
         run: make validate
+      - name: Published JSON Schema is current
+        run: make schema && git diff --exit-code schema/
       - name: Invalid fixtures are still rejected
         run: make conformance
 

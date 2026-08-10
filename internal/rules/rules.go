@@ -215,25 +215,6 @@ func init() {
 	})
 
 	register(Rule{
-		ID: "R011", Severity: Error,
-		Summary: "a strength claim states its sample size",
-		Check: func(s *spec.Set) []Finding {
-			var out []Finding
-			for _, r := range s.All {
-				if r.Strength == nil {
-					continue
-				}
-				for i, c := range r.Strength.Claims {
-					if c.N == nil {
-						out = append(out, find(r, "%s: strength claim %d omits n", r.ID, i))
-					}
-				}
-			}
-			return out
-		},
-	})
-
-	register(Rule{
 		ID: "R032", Severity: Error,
 		Summary: "a selected variant exists on the component",
 		Check: func(s *spec.Set) []Finding {

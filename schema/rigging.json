@@ -1,0 +1,363 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "BendStyle": {
+            "enum": [
+                "round",
+                "octopus",
+                "circle",
+                "worm",
+                "ewg",
+                "offset-worm",
+                "straight-shank",
+                "kahle",
+                "aberdeen",
+                "siwash",
+                "treble"
+            ]
+        },
+        "BodyProfile": {
+            "enum": [
+                "straight",
+                "curly-tail",
+                "paddle-tail",
+                "creature",
+                "craw",
+                "fluke",
+                "tube",
+                "grub",
+                "worm-live",
+                "baitfish",
+                "cut"
+            ]
+        },
+        "Catalog": {
+            "enum": [
+                "abok",
+                "wikidata",
+                "gbif",
+                "itis",
+                "worms",
+                "fao-isscfg",
+                "agrovoc"
+            ]
+        },
+        "Common": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "external_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExternalId"
+                    }
+                },
+                "former_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Id"
+                    }
+                },
+                "id": {
+                    "$ref": "#/$defs/Id"
+                },
+                "schema_version": {
+                    "allOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    ]
+                },
+                "validation": {
+                    "$ref": "#/$defs/Validation"
+                }
+            },
+            "required": [
+                "id",
+                "schema_version",
+                "validation"
+            ]
+        },
+        "ExternalId": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "catalog": {
+                    "$ref": "#/$defs/Catalog"
+                },
+                "id": {
+                    "type": "string",
+                    "description": "Always a string. Catalogue identifiers carry prefixes, leading zeros\nand whole URIs, so a number would silently corrupt them."
+                },
+                "rank": {
+                    "$ref": "#/$defs/Rank"
+                },
+                "source": {
+                    "$ref": "#/$defs/Id"
+                }
+            },
+            "required": [
+                "catalog",
+                "id"
+            ]
+        },
+        "Id": {
+            "type": "string",
+            "description": "Exactly one dot. Category from #IdCategory, name in lowercase kebab-case.",
+            "pattern": "^[a-z][a-z0-9]*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "Names": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "aliases": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "canonical": {
+                    "type": "string"
+                },
+                "trademark_note": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "canonical"
+            ]
+        },
+        "Rank": {
+            "enum": [
+                "preferred",
+                "normal",
+                "deprecated"
+            ]
+        },
+        "RigDescriptor": {
+            "enum": [
+                "AL",
+                "CE"
+            ]
+        },
+        "RigVerb": {
+            "enum": [
+                "IN",
+                "OUT",
+                "TH",
+                "SL",
+                "RO",
+                "SK",
+                "BU"
+            ]
+        },
+        "Validation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationEvent"
+                    }
+                },
+                "status": {
+                    "$ref": "#/$defs/ValidationStatus"
+                }
+            },
+            "required": [
+                "status"
+            ]
+        },
+        "ValidationEvent": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "by": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "detail": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/$defs/ValidationMethod"
+                },
+                "result": {
+                    "$ref": "#/$defs/ValidationResult"
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Id"
+                    }
+                }
+            },
+            "required": [
+                "by",
+                "date",
+                "method",
+                "result"
+            ]
+        },
+        "ValidationMethod": {
+            "enum": [
+                "ci",
+                "source-corroborated",
+                "manufacturer-confirmed",
+                "photo-compared",
+                "tied",
+                "fished",
+                "expert-review"
+            ]
+        },
+        "ValidationResult": {
+            "enum": [
+                "pass",
+                "fail",
+                "partial",
+                "disputed"
+            ]
+        },
+        "ValidationStatus": {
+            "enum": [
+                "unvalidated",
+                "machine-only",
+                "corroborated",
+                "field-tested",
+                "disputed"
+            ]
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "applies_to": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "body_profile": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BodyProfile"
+                    }
+                },
+                "hook_bend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/BendStyle"
+                    }
+                }
+            }
+        },
+        "failure_modes": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "kind": {
+            "const": "rigging"
+        },
+        "names": {
+            "$ref": "#/$defs/Names"
+        },
+        "stages": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "along": {
+                                    "type": "string"
+                                },
+                                "angle_deg": {
+                                    "type": "number"
+                                },
+                                "at": {
+                                    "type": "string",
+                                    "description": "A landmark name, or a surface letter with a normalised position."
+                                },
+                                "depth": {
+                                    "type": "number",
+                                    "maximum": 1,
+                                    "minimum": 0
+                                },
+                                "relative_to": {
+                                    "type": "string"
+                                },
+                                "roll_deg": {
+                                    "type": "number"
+                                },
+                                "subject": {
+                                    "type": "string"
+                                },
+                                "until": {
+                                    "type": "string"
+                                },
+                                "verb": {
+                                    "$ref": "#/$defs/RigVerb"
+                                }
+                            },
+                            "required": [
+                                "verb"
+                            ]
+                        }
+                    },
+                    "descriptors": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "against": {
+                                    "type": "string"
+                                },
+                                "desc": {
+                                    "$ref": "#/$defs/RigDescriptor"
+                                },
+                                "subject": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "desc"
+                            ]
+                        }
+                    },
+                    "id": {
+                        "type": "integer"
+                    },
+                    "notation": {
+                        "type": "string"
+                    },
+                    "prose": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "weedless": {
+            "type": "boolean"
+        }
+    },
+    "$ref": "#/$defs/Common",
+    "required": [
+        "kind",
+        "names",
+        "weedless"
+    ]
+}

@@ -1,0 +1,727 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "Action": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "around": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                },
+                "chirality": {
+                    "$ref": "#/$defs/Chirality"
+                },
+                "direction": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Direction"
+                        },
+                        {
+                            "$ref": "#/$defs/ReeveDirection"
+                        }
+                    ]
+                },
+                "force": {
+                    "$ref": "#/$defs/Force"
+                },
+                "length_mm": {
+                    "type": "number"
+                },
+                "names": {
+                    "type": "string"
+                },
+                "over": {
+                    "type": "string"
+                },
+                "repeat": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "$ref": "#/$defs/Range"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                "rotation": {
+                    "$ref": "#/$defs/Rotation"
+                },
+                "subject": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                },
+                "through": {
+                    "type": "string"
+                },
+                "verb": {
+                    "$ref": "#/$defs/Verb"
+                },
+                "wet": {
+                    "type": "boolean"
+                }
+            },
+            "required": [
+                "subject",
+                "verb"
+            ]
+        },
+        "Catalog": {
+            "enum": [
+                "abok",
+                "wikidata",
+                "gbif",
+                "itis",
+                "worms",
+                "fao-isscfg",
+                "agrovoc"
+            ]
+        },
+        "Chirality": {
+            "enum": [
+                "/",
+                "\\"
+            ]
+        },
+        "Common": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "external_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExternalId"
+                    }
+                },
+                "former_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Id"
+                    }
+                },
+                "id": {
+                    "$ref": "#/$defs/Id"
+                },
+                "schema_version": {
+                    "allOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    ]
+                },
+                "validation": {
+                    "$ref": "#/$defs/Validation"
+                }
+            },
+            "required": [
+                "id",
+                "schema_version",
+                "validation"
+            ]
+        },
+        "Descriptor": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "against": {
+                    "type": "string"
+                },
+                "desc": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "desc"
+            ]
+        },
+        "Direction": {
+            "enum": [
+                "F",
+                "A",
+                "L",
+                "R",
+                "U",
+                "D"
+            ]
+        },
+        "Edge": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "from": {
+                    "type": "string"
+                },
+                "knot": {
+                    "description": "Absent when the source node is itself the knot.",
+                    "$ref": "#/$defs/Id"
+                },
+                "pin": {
+                    "type": "string"
+                },
+                "rel": {
+                    "$ref": "#/$defs/EdgeRel"
+                },
+                "rigging": {
+                    "$ref": "#/$defs/Id"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "travel": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "toward_rod": {
+                            "type": "string"
+                        },
+                        "toward_terminal": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "from",
+                "rel",
+                "to"
+            ]
+        },
+        "EdgeRel": {
+            "enum": [
+                "tied",
+                "threaded",
+                "fixed",
+                "clipped",
+                "crimped",
+                "continuous",
+                "looped",
+                "rigged"
+            ]
+        },
+        "Expand": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "count": {
+                    "anyOf": [
+                        {
+                            "allOf": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0
+                                }
+                            ]
+                        },
+                        {
+                            "$ref": "#/$defs/Range"
+                        }
+                    ]
+                },
+                "from": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "with": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            "required": [
+                "count",
+                "pattern"
+            ]
+        },
+        "ExternalId": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "catalog": {
+                    "$ref": "#/$defs/Catalog"
+                },
+                "id": {
+                    "type": "string",
+                    "description": "Always a string. Catalogue identifiers carry prefixes, leading zeros\nand whole URIs, so a number would silently corrupt them."
+                },
+                "rank": {
+                    "$ref": "#/$defs/Rank"
+                },
+                "source": {
+                    "$ref": "#/$defs/Id"
+                }
+            },
+            "required": [
+                "catalog",
+                "id"
+            ]
+        },
+        "Force": {
+            "enum": [
+                "push",
+                "pull"
+            ]
+        },
+        "Id": {
+            "type": "string",
+            "description": "Exactly one dot. Category from #IdCategory, name in lowercase kebab-case.",
+            "pattern": "^[a-z][a-z0-9]*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "LineMaterial": {
+            "enum": [
+                "mono",
+                "fluoro",
+                "braid",
+                "wire",
+                "backing",
+                "leader-mono",
+                "leader-fluoro"
+            ]
+        },
+        "Names": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "aliases": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "canonical": {
+                    "type": "string"
+                },
+                "trademark_note": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "canonical"
+            ]
+        },
+        "Node": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "arms": {
+                    "type": "integer"
+                },
+                "breaking_load_kg": {
+                    "type": "number"
+                },
+                "diameter_mm": {
+                    "type": "number"
+                },
+                "gap_mm": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "length_mm": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "$ref": "#/$defs/Range"
+                        }
+                    ]
+                },
+                "mass_g": {
+                    "type": "number"
+                },
+                "material": {
+                    "$ref": "#/$defs/LineMaterial"
+                },
+                "rating_kg": {
+                    "type": "number"
+                },
+                "ref": {
+                    "$ref": "#/$defs/Id"
+                },
+                "role": {
+                    "$ref": "#/$defs/NodeRole"
+                },
+                "type": {
+                    "const": "line"
+                }
+            },
+            "required": [
+                "id"
+            ]
+        },
+        "NodeRole": {
+            "enum": [
+                "main-line",
+                "leader",
+                "dropper",
+                "tag"
+            ]
+        },
+        "PatternDef": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "edges": {
+                    "type": "array"
+                },
+                "exposes": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "in": {
+                            "type": "string"
+                        },
+                        "out": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "in",
+                        "out"
+                    ]
+                },
+                "nodes": {
+                    "type": "array"
+                },
+                "params": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "required": {
+                                "type": "boolean"
+                            },
+                            "type": {
+                                "enum": [
+                                    "ref",
+                                    "number",
+                                    "string",
+                                    "range"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "required",
+                            "type"
+                        ]
+                    }
+                },
+                "stages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Stage"
+                    }
+                },
+                "target": {
+                    "$ref": "#/$defs/PatternTarget"
+                }
+            },
+            "required": [
+                "target"
+            ]
+        },
+        "PatternTarget": {
+            "enum": [
+                "rig",
+                "knot"
+            ]
+        },
+        "Range": {
+            "type": "array",
+            "prefixItems": [
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "number"
+                }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+        },
+        "Rank": {
+            "enum": [
+                "preferred",
+                "normal",
+                "deprecated"
+            ]
+        },
+        "ReeveDirection": {
+            "enum": [
+                "F-A",
+                "A-F",
+                "L-R",
+                "R-L",
+                "U-D",
+                "D-U"
+            ]
+        },
+        "Rotation": {
+            "enum": [
+                "CW",
+                "CCW"
+            ]
+        },
+        "Stage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Action"
+                    }
+                },
+                "descriptors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Descriptor"
+                    }
+                },
+                "expand": {
+                    "$ref": "#/$defs/Expand"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notation": {
+                    "type": "string"
+                },
+                "prose": {
+                    "type": "string"
+                }
+            }
+        },
+        "Tier": {
+            "enum": [
+                "A",
+                "B",
+                "C"
+            ]
+        },
+        "Validation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationEvent"
+                    }
+                },
+                "status": {
+                    "$ref": "#/$defs/ValidationStatus"
+                }
+            },
+            "required": [
+                "status"
+            ]
+        },
+        "ValidationEvent": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "by": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "detail": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/$defs/ValidationMethod"
+                },
+                "result": {
+                    "$ref": "#/$defs/ValidationResult"
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Id"
+                    }
+                }
+            },
+            "required": [
+                "by",
+                "date",
+                "method",
+                "result"
+            ]
+        },
+        "ValidationMethod": {
+            "enum": [
+                "ci",
+                "source-corroborated",
+                "manufacturer-confirmed",
+                "photo-compared",
+                "tied",
+                "fished",
+                "expert-review"
+            ]
+        },
+        "ValidationResult": {
+            "enum": [
+                "pass",
+                "fail",
+                "partial",
+                "disputed"
+            ]
+        },
+        "ValidationStatus": {
+            "enum": [
+                "unvalidated",
+                "machine-only",
+                "corroborated",
+                "field-tested",
+                "disputed"
+            ]
+        },
+        "Verb": {
+            "enum": [
+                "GP",
+                "MB",
+                "ML",
+                "MT",
+                "MV",
+                "RV",
+                "TW"
+            ]
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "edges": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Edge"
+            }
+        },
+        "expand": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Expand"
+            }
+        },
+        "failure_modes": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "kind": {
+            "const": "rig"
+        },
+        "legality": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "general_warning": {
+                    "type": "boolean"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "restrictions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "jurisdiction": {
+                                "type": "string"
+                            },
+                            "rule": {
+                                "type": "string"
+                            },
+                            "source": {
+                                "$ref": "#/$defs/Id"
+                            },
+                            "tier": {
+                                "$ref": "#/$defs/Tier"
+                            }
+                        },
+                        "required": [
+                            "jurisdiction",
+                            "rule",
+                            "source",
+                            "tier"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "general_warning"
+            ]
+        },
+        "names": {
+            "$ref": "#/$defs/Names"
+        },
+        "nodes": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Node"
+            }
+        },
+        "patterns": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/$defs/PatternDef"
+            }
+        },
+        "variant_of": {
+            "$ref": "#/$defs/Id"
+        }
+    },
+    "$ref": "#/$defs/Common",
+    "required": [
+        "names"
+    ]
+}

@@ -1,0 +1,273 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$defs": {
+        "Catalog": {
+            "enum": [
+                "abok",
+                "wikidata",
+                "gbif",
+                "itis",
+                "worms",
+                "fao-isscfg",
+                "agrovoc"
+            ]
+        },
+        "Common": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "external_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ExternalId"
+                    }
+                },
+                "former_ids": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Id"
+                    }
+                },
+                "id": {
+                    "$ref": "#/$defs/Id"
+                },
+                "schema_version": {
+                    "allOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "integer",
+                            "minimum": 0
+                        }
+                    ]
+                },
+                "validation": {
+                    "$ref": "#/$defs/Validation"
+                }
+            },
+            "required": [
+                "id",
+                "schema_version",
+                "validation"
+            ]
+        },
+        "Density": {
+            "enum": [
+                "sinking",
+                "neutral",
+                "floating"
+            ]
+        },
+        "ExternalId": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "catalog": {
+                    "$ref": "#/$defs/Catalog"
+                },
+                "id": {
+                    "type": "string",
+                    "description": "Always a string. Catalogue identifiers carry prefixes, leading zeros\nand whole URIs, so a number would silently corrupt them."
+                },
+                "rank": {
+                    "$ref": "#/$defs/Rank"
+                },
+                "source": {
+                    "$ref": "#/$defs/Id"
+                }
+            },
+            "required": [
+                "catalog",
+                "id"
+            ]
+        },
+        "Id": {
+            "type": "string",
+            "description": "Exactly one dot. Category from #IdCategory, name in lowercase kebab-case.",
+            "pattern": "^[a-z][a-z0-9]*\\.[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "LineMaterial": {
+            "enum": [
+                "mono",
+                "fluoro",
+                "braid",
+                "wire",
+                "backing",
+                "leader-mono",
+                "leader-fluoro"
+            ]
+        },
+        "Low3": {
+            "enum": [
+                "low",
+                "medium",
+                "high"
+            ]
+        },
+        "Rank": {
+            "enum": [
+                "preferred",
+                "normal",
+                "deprecated"
+            ]
+        },
+        "Validation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/ValidationEvent"
+                    }
+                },
+                "status": {
+                    "$ref": "#/$defs/ValidationStatus"
+                }
+            },
+            "required": [
+                "status"
+            ]
+        },
+        "ValidationEvent": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "by": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "detail": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/$defs/ValidationMethod"
+                },
+                "result": {
+                    "$ref": "#/$defs/ValidationResult"
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Id"
+                    }
+                }
+            },
+            "required": [
+                "by",
+                "date",
+                "method",
+                "result"
+            ]
+        },
+        "ValidationMethod": {
+            "enum": [
+                "ci",
+                "source-corroborated",
+                "manufacturer-confirmed",
+                "photo-compared",
+                "tied",
+                "fished",
+                "expert-review"
+            ]
+        },
+        "ValidationResult": {
+            "enum": [
+                "pass",
+                "fail",
+                "partial",
+                "disputed"
+            ]
+        },
+        "ValidationStatus": {
+            "enum": [
+                "unvalidated",
+                "machine-only",
+                "corroborated",
+                "field-tested",
+                "disputed"
+            ]
+        }
+    },
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "diameters": {
+            "type": "array",
+            "description": "Breaking load per diameter is not standardised, so each pairing is a\nsourced measurement rather than a property of the material.",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "breaking_load_kg": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                    },
+                    "diameter_mm": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                    },
+                    "rank": {
+                        "$ref": "#/$defs/Rank"
+                    },
+                    "source": {
+                        "$ref": "#/$defs/Id"
+                    }
+                },
+                "required": [
+                    "breaking_load_kg",
+                    "diameter_mm",
+                    "source"
+                ]
+            }
+        },
+        "kind": {
+            "const": "line"
+        },
+        "material": {
+            "$ref": "#/$defs/LineMaterial"
+        },
+        "name": {
+            "type": "string"
+        },
+        "properties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "abrasion_resistance": {
+                    "$ref": "#/$defs/Low3"
+                },
+                "density": {
+                    "$ref": "#/$defs/Density"
+                },
+                "knot_sensitivity": {
+                    "$ref": "#/$defs/Low3"
+                },
+                "stretch": {
+                    "$ref": "#/$defs/Low3"
+                },
+                "underwater_visibility": {
+                    "$ref": "#/$defs/Low3"
+                }
+            },
+            "required": [
+                "abrasion_resistance",
+                "density",
+                "knot_sensitivity",
+                "stretch",
+                "underwater_visibility"
+            ]
+        }
+    },
+    "$ref": "#/$defs/Common",
+    "required": [
+        "kind",
+        "material",
+        "name",
+        "properties"
+    ]
+}
