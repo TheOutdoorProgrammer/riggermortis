@@ -63,17 +63,37 @@ func Stage(g *spec.Geometry, index int) string {
 				path(s.Points), Accent, ringWidth+8)
 		}
 	}
-	for _, s := range segs {
-		d := path(s.Points)
-		fmt.Fprintf(&b,
-			`<path d="%s" fill="none" stroke="%s" stroke-width="%g" stroke-linecap="round"/>`,
-			d, Background, casingWidth)
-		fmt.Fprintf(&b,
-			`<path d="%s" fill="none" stroke="%s" stroke-width="%g" stroke-linecap="round"/>`,
-			d, colour[s.Cord], cordWidth)
+	// Paint level by level, all casings then all cords. Casing before cord per
+	// piece would let a piece erase its own neighbour, which reads as a dashed
+	// rope; only a HIGHER level may erase a lower one, and that is the crossing.
+	for _, level := range levels(segs) {
+		for _, s := range level {
+			fmt.Fprintf(&b,
+				`<path d="%s" fill="none" stroke="%s" stroke-width="%g" stroke-linecap="butt"/>`,
+				path(s.Points), Background, casingWidth)
+		}
+		for _, s := range level {
+			fmt.Fprintf(&b,
+				`<path d="%s" fill="none" stroke="%s" stroke-width="%g" stroke-linecap="round"/>`,
+				path(s.Points), colour[s.Cord], cordWidth)
+		}
 	}
 	b.WriteString(`</svg>`)
 	return b.String()
+}
+
+// levels groups pieces by paint order, ascending.
+func levels(segs []spec.Segment) [][]spec.Segment {
+	var out [][]spec.Segment
+	for i := 0; i < len(segs); {
+		j := i
+		for j < len(segs) && segs[j].Z == segs[i].Z {
+			j++
+		}
+		out = append(out, segs[i:j])
+		i = j
+	}
+	return out
 }
 
 // path emits a Catmull-Rom spline through every point, converted to cubic

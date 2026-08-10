@@ -1,7 +1,7 @@
 CUE   := cue
 KINDS := Component Line Knot Rigging Rig Source
 
-.PHONY: check validate conformance rules schema site serve fmt
+.PHONY: check validate conformance rules schema site serve look fmt
 
 ## Shape, enums and grammar, for the whole dataset in one pass.
 ## The validate package keys every record by its own id, so records collide
@@ -43,6 +43,16 @@ site:
 
 serve: site
 	@echo "http://localhost:8080"; cd site && python3 -m http.server 8080
+
+## Render rope test cases and screenshot them. Visual work gets looked at.
+look:
+	@mkdir -p .look
+	@LOOK_OUT=.look/look.html go run ./cmd/look
+	@"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
+	  --disable-gpu --screenshot=.look/look.png --window-size=700,1080 \
+	  --hide-scrollbars --default-background-color=282a36 \
+	  "file://$$PWD/.look/look.html" >/dev/null 2>&1
+	@echo ".look/look.png"
 
 fmt:
 	@$(CUE) fmt ./cue/ ./validate/

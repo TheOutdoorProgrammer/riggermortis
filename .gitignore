@@ -10,3 +10,5 @@ __pycache__/
 /rig
 /site/
 /schema/*.json.tmp
+/.look/
+/look.html
