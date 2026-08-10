@@ -663,7 +663,7 @@ params:
 nodes:
   - {id: "drop-{i}", ref: knot.dropper-loop}
   - {id: "hook-{i}", ref: "{hook}"}
-  - {id: "seg-{i}",  type: line, role: leader, length_in: "{spacing_mm}"}
+  - {id: "seg-{i}",  type: line, role: leader, length_mm: "{spacing_mm}"}
 edges:
   - {from: in,        to: "drop-{i}", rel: continuous, pin: in}
   - {from: "drop-{i}", to: "hook-{i}", rel: looped,    pin: loop}
