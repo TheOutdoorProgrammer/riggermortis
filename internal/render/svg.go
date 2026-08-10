@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Package render turns authored geometry into SVG.
+// Package render turns solved geometry into SVG.
 //
-// Cord is drawn twice per segment: a wide casing in the background colour,
-// then the cord colour on top. Painting in ascending z order means a later
-// segment's casing erases the one beneath it at a crossing, which is how a
-// strand reads as passing over. It is the standard way knot diagrams are
-// drawn and it needs no masks, clip paths or z-buffer.
+// Cord is drawn twice per piece: a wide casing in the page ground, then the
+// cord colour on top. Painting in ascending z means a later piece's casing
+// erases the one beneath it at a crossing, which is how a strand reads as
+// passing over. No masks, clip paths or z-buffer.
 package render
 
 import (
@@ -16,31 +15,35 @@ import (
 	"github.com/theoutdoorprogrammer/riggermortis/internal/spec"
 )
 
-// Dracula. Background must match the page or the casings show as halos.
+// Casings are painted in the page ground, so this must match it.
 const (
 	Background = "#282a36"
 	Muted      = "#6272a4"
+	Accent     = "#bd93f9"
 )
 
 var palette = []string{"#ff79c6", "#8be9fd", "#50fa7b", "#ffb86c"}
 
 const (
-	cordWidth   = 13.0
-	casingWidth = 25.0
+	cordWidth   = 17.0
+	casingWidth = 29.0
+	ringWidth   = 25.0
 )
 
-// Stage renders one stage as a standalone SVG element.
+// Stage renders the whole knot, calling out the crossing this step introduces.
+// The reader always sees both ends and the finished shape, never a fragment.
 func Stage(g *spec.Geometry, index int) string {
 	if g == nil || index < 0 || index >= len(g.Stages) {
 		return ""
 	}
+	sg := g.Stages[index]
+
 	colour := map[string]string{}
 	for i, c := range g.Cords {
 		colour[c] = palette[i%len(palette)]
 	}
 
-	segs := append([]spec.Segment(nil), g.Stages[index].Segments...)
-	// Stable ascending z: equal z keeps authored order.
+	segs := append([]spec.Segment(nil), sg.Segments...)
 	for i := 1; i < len(segs); i++ {
 		for j := i; j > 0 && segs[j].Z < segs[j-1].Z; j-- {
 			segs[j], segs[j-1] = segs[j-1], segs[j]
@@ -49,7 +52,17 @@ func Stage(g *spec.Geometry, index int) string {
 
 	var b strings.Builder
 	fmt.Fprintf(&b, `<svg viewBox="0 0 %g %g" class="knot" role="img" aria-label="stage %d">`,
-		g.Width, g.Height, g.Stages[index].Stage)
+		g.Width, g.Height, sg.Stage)
+
+	// Highlight rings go under everything, so a called-out crossing glows
+	// behind the cord rather than obscuring it.
+	for _, s := range segs {
+		if s.Stage == sg.Stage && s.Stage != 0 {
+			fmt.Fprintf(&b,
+				`<path d="%s" fill="none" stroke="%s" stroke-width="%g" stroke-linecap="round" opacity=".9"/>`,
+				path(s.Points), Accent, ringWidth+8)
+		}
+	}
 	for _, s := range segs {
 		d := path(s.Points)
 		fmt.Fprintf(&b,
@@ -64,8 +77,8 @@ func Stage(g *spec.Geometry, index int) string {
 }
 
 // path emits a Catmull-Rom spline through every point, converted to cubic
-// Béziers. Authored points are on the curve rather than pulling it, which is
-// the only sane way to hand-author coordinates.
+// Béziers. Points sit on the curve rather than pulling it, which is what makes
+// solved coordinates land where the solver put them.
 func path(pts []spec.Point) string {
 	if len(pts) < 2 {
 		return ""
@@ -82,7 +95,6 @@ func path(pts []spec.Point) string {
 		}
 		return pts[i]
 	}
-
 	for i := 0; i < len(pts)-1; i++ {
 		p0, p1, p2, p3 := at(i-1), at(i), at(i+1), at(i+2)
 		c1x, c1y := p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6

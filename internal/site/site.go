@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/theoutdoorprogrammer/riggermortis/internal/render"
+	"github.com/theoutdoorprogrammer/riggermortis/internal/solve"
 	"github.com/theoutdoorprogrammer/riggermortis/internal/spec"
 )
 
@@ -36,6 +37,7 @@ type Cord struct {
 
 type knotView struct {
 	*spec.Record
+	Geo   *spec.Geometry
 	Steps []Step
 	Cords []Cord
 }
@@ -69,20 +71,25 @@ func Build(s *spec.Set, out string) error {
 		if r.Kind != "knot" {
 			continue
 		}
-		v := knotView{Record: r}
+		// Authored geometry is an escape hatch; solving is the default.
+		geo := r.Geometry
+		if geo == nil {
+			geo = solve.Geometry(r)
+		}
+		v := knotView{Record: r, Geo: geo}
 		for i, st := range r.Stages {
 			step := Step{N: st.ID, Prose: st.Prose, Notation: st.Notation}
 			if step.N == 0 {
 				step.N = i + 1
 			}
-			if r.Geometry != nil && i < len(r.Geometry.Stages) {
-				step.SVG = template.HTML(render.Stage(r.Geometry, i)) //nolint:gosec // generated markup, no user input
+			if geo != nil && i < len(geo.Stages) {
+				step.SVG = template.HTML(render.Stage(geo, i)) //nolint:gosec // generated markup, no user input
 			}
 			v.Steps = append(v.Steps, step)
 		}
-		if r.Geometry != nil {
-			for _, c := range r.Geometry.Cords {
-				v.Cords = append(v.Cords, Cord{Name: c, Colour: render.Colour(r.Geometry, c)})
+		if geo != nil {
+			for _, c := range geo.Cords {
+				v.Cords = append(v.Cords, Cord{Name: c, Colour: render.Colour(geo, c)})
 			}
 		}
 

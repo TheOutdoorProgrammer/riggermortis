@@ -128,3 +128,6 @@ ul li { margin: .3rem 0; }
   h1 { font-size: 2rem; }
   .cards { grid-template-columns: repeat(2, 1fr); }
 }
+
+.nodiagram{background:var(--alt);border:1px dashed var(--muted);border-radius:.6rem;
+  padding:1rem;color:var(--muted);font-size:.9rem}

@@ -103,6 +103,10 @@ type Segment struct {
 	Cord   string  `yaml:"cord"`
 	Z      int     `yaml:"z"`
 	Points []Point `yaml:"points"`
+	// Stage that introduces this piece, so the renderer can call out what the
+	// current step does while still drawing the whole knot. Zero means the
+	// piece is structural rather than belonging to any one step.
+	Stage int `yaml:"stage,omitempty"`
 }
 
 type StageGeometry struct {
@@ -118,7 +122,13 @@ type Geometry struct {
 }
 
 type Action struct {
-	Verb string `yaml:"verb"`
+	Verb      string `yaml:"verb"`
+	Names     string `yaml:"names"`
+	Through   string `yaml:"through"`
+	Chirality string `yaml:"chirality"`
+	Rotation  string `yaml:"rotation"`
+	Force     string `yaml:"force"`
+	Repeat    any    `yaml:"repeat"`
 }
 
 type Stage struct {

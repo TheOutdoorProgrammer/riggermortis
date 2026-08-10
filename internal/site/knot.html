@@ -13,7 +13,7 @@
   </aside>
   {{end}}
 
-  {{if .Geometry}}
+  {{if .Geo}}
   <section class="stepper">
     <!-- Radio inputs rather than script: the steps work with JavaScript off. -->
     {{range $i, $s := .Steps}}
@@ -47,6 +47,10 @@
   </section>
   {{end}}
 
+  {{if not .Geo}}
+  <p class="nodiagram">No diagram yet. The solver could not read this knot's actions into crossings, and a wrong picture is worse than none.</p>
+  {{end}}
+
   {{with .FailureModes}}
   <section>
     <h2>How it goes wrong</h2>
@@ -61,7 +65,7 @@
       <dt>Suits</dt><dd>{{if .LineTypes}}{{range $i, $l := .LineTypes}}{{if $i}}, {{end}}{{$l}}{{end}}{{else}}nothing listed{{end}}</dd>
     </dl>
     <p class="disclaimer">
-      Geometry on this page is hand-authored and unconfirmed. The renderer is real; the coordinates are a placeholder until a solver derives them from the tying actions.
+      Every diagram is solved from this record's tying actions, not drawn. Chirality decides each crossing, so changing one field changes the picture.
     </p>
   </footer>
 </article>
