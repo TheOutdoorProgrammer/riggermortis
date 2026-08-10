@@ -12,7 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: cue-lang/setup-cue@v1
+      - uses: actions/setup-go@v5
+        with: {go-version-file: go.mod, cache: true}
+      - name: Install CUE
+        run: go install cuelang.org/go/cmd/cue@v0.17.1
       - name: Records match the spec
         run: make validate
       - name: Published JSON Schema is current
