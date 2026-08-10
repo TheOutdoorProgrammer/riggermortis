@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: component
+schema_version: 0
+id: weight.egg
+name: Egg sinker
+mounting: threaded
+blocks_passage: false
+bore_in: 0.09
+pins: []
+validation: {status: unvalidated, events: []}

@@ -12,3 +12,6 @@ reliability: high
 notes: >
   Copyright renewed in 1971 and protected until 2040. Reference numbers may be
   cited; text and illustrations may never be reproduced.
+validation:
+  status: unvalidated
+  events: []

@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: knot
+schema_version: 0
+id: knot.square
+names: {canonical: Square knot}
+external_ids:
+  - {catalog: abok, id: 1204}
+role: bend
+connects: {from: line-end, to: [line-end]}
+line_types: []
+stages: []
+validation: {status: unvalidated, events: []}

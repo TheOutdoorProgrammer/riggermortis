@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: ODbL-1.0
+kind: source
+schema_version: 0
+id: src.example
+type: book
+title: Example
+year: 2019
+license: all-rights-reserved
+copy_policy: cite-only
+reliability: low

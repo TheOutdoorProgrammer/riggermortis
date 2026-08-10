@@ -12,3 +12,6 @@ reliability: low
 notes: >
   Deliberate placeholder so rule 10 stays satisfiable while records are drafted.
   Every reference to this id is an outstanding debt, and CI should count them.
+validation:
+  status: unvalidated
+  events: []

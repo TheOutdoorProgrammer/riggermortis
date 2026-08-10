@@ -1,0 +1,7 @@
+# fixture                    kind       what it must catch
+unknown-field.yaml           Component  a vendor field has nowhere to live
+bad-enum.yaml                Component  mounting must be a registered value
+bad-id-two-dots.yaml         Component  id grammar allows exactly one dot
+imperial-unit.yaml           Component  no field exists for an imperial suffix
+numeric-external-id.yaml     Knot       catalogue ids are strings, never numbers
+missing-validation.yaml      Source     every record says how it was checked
