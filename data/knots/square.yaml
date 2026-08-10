@@ -8,7 +8,7 @@ names:
   aliases: [reef knot, Hercules knot]
 
 # No Ashley number asserted. Adding one needs the book, not recall.
-refs: []
+external_ids: []
 
 role: bend
 
