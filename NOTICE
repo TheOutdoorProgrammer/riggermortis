@@ -1,0 +1,16 @@
+riggermortis
+Copyright 2026 Joey Stout
+
+This product is dual licensed.
+
+Code, the spec, and documentation are licensed under the Apache License,
+Version 2.0. See LICENSE.
+
+The dataset under data/ is licensed under the Open Database License (ODbL)
+version 1.0. See LICENSE-DATA.
+
+Attribution required for any Produced Work derived from the dataset:
+
+    Contains information from riggermortis, which is made available under
+    the Open Database License (ODbL) v1.0.
+    https://github.com/TheOutdoorProgrammer/riggermortis

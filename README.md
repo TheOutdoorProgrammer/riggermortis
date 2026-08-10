@@ -137,7 +137,6 @@ Specific findings that overturn common assumptions:
 
 Tracked as ADRs in [`adr/`](adr/) as they are settled.
 
-- **Licensing.** Code and data need separate licenses, and the data license decides whether the dataset stays open. Deliberately unlicensed until chosen, so treat this repository as all-rights-reserved for now.
 - **Notation.** Whether to adopt, adapt, or merely take inspiration from Suber's notation, which carries a bare copyright notice and no license grant.
 - **Validation runtime.** No production knot library exists in JavaScript, Rust, or Go. Regina is the strongest tool but ships as a container or conda dependency; `pyknotid` is MIT and pip-installable but has been unmaintained since 2018. CI will likely shell out to a container.
 - **Scope boundary.** Freshwater and saltwater conventional tackle is in. Fly fishing is a separate universe and is out for v1.
@@ -157,6 +156,25 @@ riggermortis/
 The spec is **vendor neutral**.
 Line is line, hooks are hooks.
 What a thing is made of and how it behaves is normative; who sold it is not.
+
+## Licence
+
+Dual licensed, and the split is deliberate.
+
+| What | Licence | Why |
+| --- | --- | --- |
+| `data/` | **ODbL-1.0** | The dataset is the expensive part and it stays open. |
+| Everything else, including this spec and all code | **Apache-2.0** | Anyone should be able to implement the format and owe nothing. |
+
+**The directory is the boundary.** A file inside `data/` is part of the database. A file outside it is not.
+
+What ODbL means for you in practice:
+
+- **Build whatever you want on it**, commercially, closed source. A site, an app, a printed chart. Those are Produced Works and need only attribution.
+- **If you modify the data** and publicly use something built on your modified version, you must offer that modified database under ODbL. Improvements stay open.
+
+Attribution text is in [NOTICE](NOTICE).
+Full reasoning, including why not CC BY-SA, is in [ADR 0005](adr/0005-dual-licence-odbl-and-apache.md).
 
 ---
 
