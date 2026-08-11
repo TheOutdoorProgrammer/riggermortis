@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/theoutdoorprogrammer/riggermortis/internal/rules"
+	"github.com/theoutdoorprogrammer/riggermortis/internal/solve"
 	"github.com/theoutdoorprogrammer/riggermortis/internal/spec"
 )
 
@@ -19,6 +20,7 @@ func main() {
 	root := flag.String("data", "data", "dataset root")
 	strict := flag.Bool("strict", false, "treat warnings as failures")
 	list := flag.Bool("rules", false, "list registered rules and exit")
+	cross := flag.String("crossings", "", "report the crossing sequence of a knot id and exit")
 	flag.Parse()
 
 	if *list {
@@ -32,6 +34,34 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "load:", err)
 		os.Exit(2)
+	}
+
+	if *cross != "" {
+		r := set.ByID[*cross]
+		if r == nil {
+			fmt.Fprintln(os.Stderr, "no such record:", *cross)
+			os.Exit(2)
+		}
+		g := solve.Geometry(r)
+		if g == nil {
+			fmt.Fprintln(os.Stderr, *cross, "solves to no crossings")
+			os.Exit(2)
+		}
+		bad := 0
+		for i := range g.Stages {
+			for _, rd := range solve.ReadCrossings(g, i) {
+				mark := "ok"
+				if !rd.Alternating {
+					mark, bad = "NOT ALTERNATING", bad+1
+				}
+				fmt.Printf("stage %d cord %s  n=%d  %v  %s\n",
+					g.Stages[i].Stage, rd.Cord, len(rd.Sequence), rd.Sequence, mark)
+			}
+		}
+		if bad > 0 {
+			os.Exit(1)
+		}
+		return
 	}
 
 	var errs, warns int

@@ -112,6 +112,17 @@ type Segment struct {
 type StageGeometry struct {
 	Stage    int       `yaml:"stage"`
 	Segments []Segment `yaml:"segments"`
+	// Where the working end travels next. A knot diagram teaches by showing
+	// motion, not by showing a sequence of finished positions.
+	Arrow *Arrow `yaml:"arrow,omitempty"`
+	// Ends marks each working end so a reader can track which is which.
+	Ends []Point `yaml:"ends,omitempty"`
+}
+
+type Arrow struct {
+	From Point `yaml:"from"`
+	Ctrl Point `yaml:"ctrl"`
+	To   Point `yaml:"to"`
 }
 
 type Geometry struct {

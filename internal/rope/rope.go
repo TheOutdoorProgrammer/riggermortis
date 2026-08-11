@@ -157,18 +157,33 @@ type crossing struct {
 
 // Project flattens the cords, resolving paint order by depth. Each cord is cut
 // at every crossing so it can be in front at one and behind at the next.
+// Box is a projection frame shared by every stage.
+type Box struct{ MinX, MaxX, MinY, MaxY float64 }
+
+// Frame returns bounds covering every stage, so one transform serves them all.
+func Frame(stages [][]Cord) Box {
+	b := Box{math.Inf(1), math.Inf(-1), math.Inf(1), math.Inf(-1)}
+	for _, cords := range stages {
+		for _, c := range cords {
+			for _, p := range c.P {
+				b.MinX, b.MaxX = math.Min(b.MinX, p.X), math.Max(b.MaxX, p.X)
+				b.MinY, b.MaxY = math.Min(b.MinY, p.Y), math.Max(b.MaxY, p.Y)
+			}
+		}
+	}
+	return b
+}
+
 func Project(cords []Cord, w, h float64) []spec.Segment {
+	return ProjectIn(cords, Frame([][]Cord{cords}), w, h)
+}
+
+// ProjectIn projects within a fixed frame.
+func ProjectIn(cords []Cord, box Box, w, h float64) []spec.Segment {
 	pts := make([][]spec.Point, len(cords))
 	depth := make([][]float64, len(cords))
 
-	minX, maxX := math.Inf(1), math.Inf(-1)
-	minY, maxY := math.Inf(1), math.Inf(-1)
-	for _, c := range cords {
-		for _, p := range c.P {
-			minX, maxX = math.Min(minX, p.X), math.Max(maxX, p.X)
-			minY, maxY = math.Min(minY, p.Y), math.Max(maxY, p.Y)
-		}
-	}
+	minX, maxX, minY, maxY := box.MinX, box.MaxX, box.MinY, box.MaxY
 	pad := 34.0
 	sx := (w - 2*pad) / (maxX - minX)
 	sy := (h - 2*pad) / (maxY - minY)
