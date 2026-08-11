@@ -211,11 +211,10 @@ func buildStage(k Knot, stage int) []rope.Cord {
 		// does not seat this knot, it flattens the eyes the clasp is made of, and
 		// contact pushes the paired legs apart into a shape rope does not take.
 		cords = rope.Weave{
-			Signs:     k.Halves,
-			Crossings: len(k.Crossings),
-			Diameter:  diameter,
-			Lead:      lead,
-			Tight:     tight,
+			Signs:    k.Halves,
+			Diameter: diameter,
+			Lead:     lead,
+			Tight:    tight,
 		}.Build()
 	} else {
 		cords = rope.Build(rope.Layout{Twists: twists(done), Radius: 26,

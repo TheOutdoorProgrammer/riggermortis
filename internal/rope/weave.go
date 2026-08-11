@@ -10,8 +10,6 @@ import "math"
 type Weave struct {
 	// Signs is the handedness of each half knot, in tying order.
 	Signs []int
-	// Crossings is how many times one cord passes the other.
-	Crossings int
 	// Diameter of the cord. Every other length is a multiple of it: a knot is
 	// as big as the rope it is tied in and has no scale of its own.
 	Diameter float64
@@ -28,22 +26,23 @@ func (w Weave) Build() []Cord {
 		d = 30
 	}
 
-	// Legs lie against each other at the mouth, spread at the belly to collar
-	// the other cord's pair, and the turn reaches past it so they interlock.
+	// Legs lie against each other at the mouth; the eye has to swallow the other
+	// cord's pair, so it is that pair's width plus a cord. Reach lands the eye
+	// just past the other one, where that pair has closed up again.
 	mouth := d * 0.58
-	belly := d * 2.1
-	reach := d * 0.8 * float64(w.Crossings)
+	eyeR := mouth + d*1.6
+	reach := eyeR * 2.3
 	lead := w.Lead
 	if lead == 0 {
 		lead = d * 10
 	}
-	if w.Tight {
-		mouth *= 0.86
-		belly *= 0.82
-		reach *= 0.9
+	if !w.Tight {
+		mouth *= 1.25
+		eyeR *= 1.1
+		reach *= 1.1
 	}
 
-	a := Cord{ID: "a", P: sampleCR3(bight(mouth, belly, reach, lead), 26*8)}
+	a := Cord{ID: "a", P: bight(mouth, eyeR, reach, lead)}
 
 	// The second bight is the first turned half a revolution about the knot's
 	// centre. Mirroring it instead would land the paired crossings at the same
@@ -58,27 +57,71 @@ func (w Weave) Build() []Cord {
 	return cords
 }
 
-// bight folds one cord back on itself: a long teardrop, mouth left, turn right,
-// every control point a multiple of diameter. clasp drags the eye back past the
-// origin, or the second bight (this one turned about it) would only meet it.
-func bight(mouth, belly, reach, lead float64) []V3 {
-	const clasp = 0.34
-	x := func(f float64) float64 { return reach*f - reach*clasp }
-	return []V3{
-		{-lead, mouth, 0},
-		{x(-1.4), mouth, 0},
-		{x(0), mouth * 1.4, 0},
-		{x(0.3), belly * 0.8, 0},
-		{x(0.62), belly, 0},
-		{x(0.9), belly * 0.52, 0},
-		{x(1), 0, 0},
-		{x(0.9), -belly * 0.52, 0},
-		{x(0.62), -belly, 0},
-		{x(0.3), -belly * 0.8, 0},
-		{x(0), -mouth * 1.4, 0},
-		{x(-1.4), -mouth, 0},
-		{-lead, -mouth, 0},
+// wrap is how far the eye closes around itself. Past half a turn the eye is a
+// ring the other cord's pair cannot leave sideways, which is the grip.
+const wrap = 2.36
+
+// bight folds a cord into a lasso: two legs opening into a round eye. That eye
+// collars the other cord's paired legs, well outside the other eye and never
+// through it. Threading it instead ties a different knot that looks close.
+func bight(mouth, eyeR, reach, lead float64) []V3 {
+	cx := reach - eyeR
+	tip := V3{cx + eyeR*math.Cos(wrap), eyeR * math.Sin(wrap), 0}
+	// Travelling the eye with the angle decreasing, so the tangent arriving at
+	// the leg join points back along the leg.
+	tan := V3{math.Sin(wrap), -math.Cos(wrap), 0}
+
+	// The legs stay paired until clear of the other cord's eye, which sits
+	// opposite this one. Spreading any earlier lays them across that ring wide
+	// instead of running through it together, and the pairs then never cross.
+	hold := V3{eyeR*0.7 - cx, mouth, 0}
+	in := append(run(V3{-lead, mouth, 0}, hold), leg(hold, tip, tan)...)
+
+	out := append([]V3(nil), in...)
+	const steps = 72
+	for i := 1; i < steps; i++ {
+		a := wrap - 2*wrap*float64(i)/steps
+		out = append(out, V3{cx + eyeR*math.Cos(a), eyeR * math.Sin(a), 0})
 	}
+	// Only the leg comes back: the eye already carries itself from one join to
+	// the other, and mirroring that too would retrace it and pinch it shut.
+	for i := len(in) - 1; i >= 0; i-- {
+		out = append(out, V3{in[i].X, -in[i].Y, in[i].Z})
+	}
+	return out
+}
+
+// run is the straight stretch where a cord's legs lie against each other.
+func run(from, to V3) []V3 {
+	const steps = 24
+	out := make([]V3, 0, steps)
+	for i := range steps {
+		out = append(out, lerp(from, to, float64(i)/steps))
+	}
+	return out
+}
+
+// leg spreads from the paired run into the eye, leaving flat and arriving on
+// the eye's tangent so the cord does not kink. The arrival tangent stays short:
+// at full chord the curve dips back under the run.
+func leg(from, to, tan V3) []V3 {
+	k := dist(from, to)
+	t0 := V3{k * 0.75, 0, 0}
+	t1 := scale(tan, k*0.35)
+	const steps = 30
+	out := make([]V3, 0, steps)
+	for i := range steps {
+		t := float64(i) / steps
+		t2, t3 := t*t, t*t*t
+		h00, h10 := 2*t3-3*t2+1, t3-2*t2+t
+		h01, h11 := -2*t3+3*t2, t3-t2
+		out = append(out, V3{
+			h00*from.X + h10*t0.X + h01*to.X + h11*t1.X,
+			h00*from.Y + h10*t0.Y + h01*to.Y + h11*t1.Y,
+			0,
+		})
+	}
+	return out
 }
 
 // Alternate sets which cord is in front at each crossing, overriding the depth
