@@ -115,6 +115,23 @@ func tail(x, dx, y0, z0, y1, z1 float64) []V3 {
 	return out
 }
 
+// casingHalo is half the width the renderer paints a cord's casing at. A
+// crossing has to hold its paint order over at least that much rope.
+const casingHalo = 15.0
+
+// pace is a cord's mean sample spacing, so a halo in real units converts to
+// samples for cords built at different densities.
+func pace(pts []spec.Point) float64 {
+	if len(pts) < 2 {
+		return 1
+	}
+	total := 0.0
+	for i := 1; i < len(pts); i++ {
+		total += math.Hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1])
+	}
+	return math.Max(total/float64(len(pts)-1), 0.01)
+}
+
 type crossing struct {
 	i    int     // segment index within the cord
 	ti   float64 // parameter along cord i's segment
@@ -224,20 +241,28 @@ func ProjectIn(cords []Cord, box Box, w, h float64) []spec.Segment {
 	cuts := findCuts(pts, depth)
 
 	var out []spec.Segment
-	const halo = 9 // samples either side of a crossing that share its paint order
 
 	for ci, c := range cords {
-		// Paint order per sample: 0 free, 1 behind, 2 in front.
+		// Wide enough to cover the drawn cord where it crosses, measured in this
+		// cord's own samples so a densely sampled part is not swallowed whole.
+		halo := max(int(casingHalo/pace(pts[ci])), 3)
+
+		// Paint order per sample: 0 free, 1 behind, 2 in front. Nearest crossing
+		// wins, not frontmost within reach: frontmost lets one pass in front
+		// decide a whole run, painting a threaded strand over the coil it threads.
 		order := make([]int, len(pts[ci]))
-		for _, x := range cuts[ci] {
-			z := 1
-			if x.over {
-				z = 2
+		near := 0
+		for k := range order {
+			for near+1 < len(cuts[ci]) &&
+				abs(cuts[ci][near+1].i-k) <= abs(cuts[ci][near].i-k) {
+				near++
 			}
-			for k := x.i - halo; k <= x.i+halo+1; k++ {
-				if k >= 0 && k < len(order) && z > order[k] {
-					order[k] = z
-				}
+			if len(cuts[ci]) == 0 || abs(cuts[ci][near].i-k) > halo {
+				continue
+			}
+			order[k] = 1
+			if cuts[ci][near].over {
+				order[k] = 2
 			}
 		}
 
