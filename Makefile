@@ -49,7 +49,7 @@ look:
 	@mkdir -p .look
 	@LOOK_OUT=.look/look.html go run ./cmd/look
 	@"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless \
-	  --disable-gpu --screenshot=.look/look.png --window-size=700,1080 \
+	  --disable-gpu --screenshot=.look/look.png --window-size=700,2400 \
 	  --hide-scrollbars --default-background-color=282a36 \
 	  "file://$$PWD/.look/look.html" >/dev/null 2>&1
 	@echo ".look/look.png"
