@@ -41,6 +41,9 @@ No notation exists for a rigid object piercing a soft body, in fishing or anywhe
 **[0007](0007-go-only-pregenerated-svg.md): Go only.**
 Pre-generated SVG plus no configurator means no geometry ever runs client-side, so the renderer is a build tool and the browser's ecosystem is irrelevant to choosing its language. Go is a build-time compiler here, not a server: records in, static files out, nothing running in production.
 
+**[0010](0010-knot-shape-from-symmetry-not-alternation.md): shape from symmetry, not alternation.**
+A reeve is two crossings, not one, and undercounting it is what forced the square knot to be hand-drawn. A bend whose half knots cancel is two interlocked bights, each collaring the other cord's *pair* rather than threading its eye, and the two cords are related by an inversion because the square knot is amphichiral. The rejected rule matters most: a dressed square knot is **not** an alternating diagram, and asserting that it was locked in the very bug the assertion was meant to catch.
+
 ## Writing one
 
 Keep the MADR shape: context and problem statement, considered options, decision outcome with consequences both good and bad.
