@@ -2,12 +2,11 @@
 
 // Package solve derives knot geometry from the tying actions.
 //
-// The notation already contains the diagram. A knot diagram is a sequence of
-// crossings between adjacent strands, each with a handedness, which is a braid
-// word; and the stages already say where crossings happen and which way they
-// go. `ML` with chirality "/" is a positive crossing and "\" is negative, so
-// the square knot's stages read as σ σ σ⁻¹ σ⁻¹ while a granny reads σ σ σ σ.
-// One field differs and the picture differs with it.
+// A reeve is two crossings, not one. Passing an end through a loop enters the
+// region the loop bounds and then leaves it, and each of those is a crossing in
+// the diagram. Counting it once is what made the square knot read as four
+// crossings when a dressed one has six, and the missing pair is why earlier
+// attempts had to correct the picture by hand.
 //
 // Nothing here is authored. Coordinates come out of the crossing sequence, so
 // adding a knot record adds a diagram without anyone drawing one.
@@ -18,35 +17,55 @@ import (
 	"github.com/theoutdoorprogrammer/riggermortis/internal/spec"
 )
 
-// Canvas and track geometry. Two strands run left to right and swap places at
-// each crossing, which is the clearest way to show an interweave.
 const (
-	width      = 620.0
-	height     = 300.0
-	margin     = 78.0
-	trackTop   = 68.0
-	trackLow   = 132.0
-	maxSwapPad = 46.0
-	tailFade   = 6.0
+	width  = 620.0
+	height = 300.0
+	// diameter is the cord's own width. Every knot length is a multiple of it.
+	diameter = 30.0
+	lead     = 300.0
 )
 
-// Crossing is one exchange between the two strands.
+// Kind is what a crossing is doing, which decides nothing about the picture but
+// everything about how many crossings an action is worth.
+type Kind int
+
+const (
+	// Lay is one part put across another.
+	Lay Kind = iota
+	// ReeveIn enters the region a loop bounds, ReeveOut leaves it.
+	ReeveIn
+	ReeveOut
+)
+
+// Crossing is one passage of a working end past another strand.
 type Crossing struct {
 	// Sign +1 means the strand travelling downward passes over.
 	Sign int
 	// Stage that introduced it, so a diagram can be built up step by step.
 	Stage int
+	Kind  Kind
 }
 
 // Knot is the combinatorial reading of a knot's stages.
 type Knot struct {
 	Crossings []Crossing
+	// Halves is the handedness of each half knot in tying order. Reef is +1
+	// then -1, granny +1 then +1, and that difference is the whole knot.
+	Halves []int
 	// Tighten is the stage at which the knot is drawn seated rather than open.
 	Tighten int
 }
 
-// Read maps tying actions onto crossings. Reeving through a named loop
-// inherits that loop's handedness; gripping and moving change nothing.
+// Bights reports whether the half knots cancel, bringing every working end back
+// beside its own standing part. Half knots of one hand stand the knot on edge
+// instead, and that shape has no model here yet, so it falls through unfolded.
+func (k Knot) Bights() bool {
+	return len(k.Halves) == 2 && k.Halves[0]+k.Halves[1] == 0
+}
+
+// Read maps tying actions onto crossings. Reeving through a named loop inherits
+// that loop's handedness; reeving through a hook eye or other named object is
+// not a crossing with the rope at all, so it contributes none.
 func Read(r *spec.Record) Knot {
 	var k Knot
 	k.Tighten = -1
@@ -67,18 +86,23 @@ func Read(r *spec.Record) Knot {
 				if a.Names != "" {
 					loopSign[a.Names] = s
 				}
-				k.Crossings = append(k.Crossings, Crossing{Sign: s, Stage: stage})
+				k.Crossings = append(k.Crossings, Crossing{Sign: s, Stage: stage, Kind: Lay})
+				k.Halves = append(k.Halves, s)
 			case "RV":
-				if s, ok := loopSign[a.Through]; ok {
-					k.Crossings = append(k.Crossings, Crossing{Sign: s, Stage: stage})
+				s, ok := loopSign[a.Through]
+				if !ok {
+					continue
 				}
+				k.Crossings = append(k.Crossings,
+					Crossing{Sign: s, Stage: stage, Kind: ReeveIn},
+					Crossing{Sign: s, Stage: stage, Kind: ReeveOut})
 			case "MT":
 				s := 1
 				if a.Rotation == "CCW" {
 					s = -1
 				}
 				for n := 0; n < repeatCount(a.Repeat); n++ {
-					k.Crossings = append(k.Crossings, Crossing{Sign: s, Stage: stage})
+					k.Crossings = append(k.Crossings, Crossing{Sign: s, Stage: stage, Kind: Lay})
 				}
 			case "MV":
 				if a.Force == "pull" && len(k.Crossings) > 0 {
@@ -123,8 +147,6 @@ func repeatCount(v any) int {
 	return 1
 }
 
-// Geometry lays the crossing sequence out, one drawing per stage. Returns nil
-// when there are no crossings: no diagram beats a misleading one.
 // Cords returns the solved 3D cords for each stage, before projection.
 func Cords(r *spec.Record) [][]rope.Cord {
 	k := Read(r)
@@ -137,127 +159,91 @@ func Cords(r *spec.Record) [][]rope.Cord {
 		if stage == 0 {
 			stage = i + 1
 		}
-		var upto []Crossing
-		for _, c := range k.Crossings {
-			if c.Stage <= stage {
-				upto = append(upto, c)
-			}
-		}
-		if len(upto) == 0 {
-			upto = k.Crossings[:1]
-		}
-		out = append(out, buildStage(k, upto, stage))
+		out = append(out, buildStage(k, stage))
 	}
 	return out
 }
 
-// Geometry draws the knot at each stage, growing the weave as it is tied.
-//
-// Stage k shows every crossing introduced up to k, so stepping forward adds a
-// turn to the same rope rather than swapping in a new picture. Returns nil
-// when the actions yield no crossings: no diagram beats a misleading one.
+// Geometry draws the knot at each stage. Stage k shows every crossing made up
+// to k, so stepping forward adds a turn to the same rope rather than swapping
+// in a new picture. Nil when there are no crossings: no diagram beats a lie.
 func Geometry(r *spec.Record) *spec.Geometry {
-	k := Read(r)
-	if len(k.Crossings) == 0 {
+	all := Cords(r)
+	if all == nil {
 		return nil
 	}
 
 	g := &spec.Geometry{Width: width, Height: height, Cords: []string{"a", "b"}}
-
-	all := Cords(r)
 	frame := rope.Frame(all)
 	for i, st := range r.Stages {
 		stage := st.ID
 		if stage == 0 {
 			stage = i + 1
 		}
-		var upto []Crossing
-		for _, c := range k.Crossings {
-			if c.Stage <= stage {
-				upto = append(upto, c)
-			}
-		}
-		if len(upto) == 0 {
-			upto = k.Crossings[:1]
-		}
 		g.Stages = append(g.Stages, spec.StageGeometry{
 			Stage:    stage,
 			Segments: rope.ProjectIn(all[i], frame, width, height),
 		})
 	}
-	for i := range g.Stages {
-		Flip(g, i, squareFlips[r.ID]...)
-	}
 	return g
-}
-
-// squareFlips lists crossings to invert per record, numbered as the diagram
-// labels them. Corrections land here rather than in the path, where one depth
-// moves several crossings and changes how many exist.
-var squareFlips = map[string][]int{
-	"knot.square": {1, 2, 4},
-}
-
-// bendSigns detects two half knots: four crossings in two same-signed pairs.
-// That family gets rope.BuildBend's authored layout instead of the helix.
-func bendSigns(cs []Crossing) (s1, s2 int, ok bool) {
-	if len(cs) != 4 || cs[0].Sign != cs[1].Sign || cs[2].Sign != cs[3].Sign {
-		return 0, 0, false
-	}
-	return cs[0].Sign, cs[2].Sign, true
 }
 
 // buildStage produces the 3D cords for one stage, shared by the SVG path and
 // any other renderer that wants the same curves.
-func buildStage(k Knot, upto []Crossing, stage int) []rope.Cord {
-	s1, s2, isBend := bendSigns(k.Crossings)
+func buildStage(k Knot, stage int) []rope.Cord {
+	var done []Crossing
+	for _, c := range k.Crossings {
+		if c.Stage <= stage {
+			done = append(done, c)
+		}
+	}
+	if len(done) == 0 {
+		done = k.Crossings[:1]
+	}
 	tight := k.Tighten > 0 && stage >= k.Tighten
 
-	if isBend {
-		// One finished knot, traced only as far as the end has reached. Stage
-		// numbers map to how much of the path is threaded.
-		cords := rope.BuildBend(s1, s2, 5, true)
-		if f := threaded(stage); f < 1 {
-			out := make([]rope.Cord, len(cords))
-			for i, c := range cords {
-				out[i] = rope.Partial(c, f)
-			}
-			return out
+	// A cord only folds once the last tuck is made. Until then the ends have
+	// not come back to their own standing parts and the pair is still just
+	// twisted, so a part-tied knot is a shorter weave and not a cropped one.
+	var cords []rope.Cord
+	if k.Bights() && len(done) == len(k.Crossings) {
+		// Bights come out dressed, so there is nothing for physics to do. Tension
+		// does not seat this knot, it flattens the eyes the clasp is made of, and
+		// contact pushes the paired legs apart into a shape rope does not take.
+		cords = rope.Weave{
+			Signs:     k.Halves,
+			Crossings: len(k.Crossings),
+			Diameter:  diameter,
+			Lead:      lead,
+			Tight:     tight,
+		}.Build()
+	} else {
+		cords = rope.Build(rope.Layout{Twists: twists(done), Radius: 26,
+			Pitch: 74, Tail: 150, Flare: 40, Stub: 60})
+		settle := rope.Settle{Iterations: 40, Diameter: diameter, Tension: 0.12, Stiffness: 0.16}
+		if tight {
+			settle = rope.Settle{Iterations: 160, Diameter: diameter, Tension: 0.55, Stiffness: 0.18}
 		}
-		if !tight {
-			return rope.BuildBend(s1, s2, 4, false)
-		}
-		return cords
+		rope.Relax(cords, settle)
+		rope.Alternate(cords, diameter*0.55, halves(done))
 	}
-
-	cords := rope.Build(rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
-		Tail: 150, Flare: 40, Stub: 60})
-
-	// Every stage settles a little so the cord hangs rather than tracing a
-	// perfect helix. The stage that pulls settles hard.
-	settle := rope.Settle{Iterations: 40, Diameter: 30, Tension: 0.12, Stiffness: 0.16}
-	if tight {
-		settle = rope.Settle{Iterations: 160, Diameter: 30, Tension: 0.55, Stiffness: 0.18}
-	}
-	rope.Relax(cords, settle)
 	return cords
 }
 
-// threaded is how far the working end has travelled by a given stage.
-func threaded(stage int) float64 {
-	switch stage {
-	case 1:
-		return 0.34
-	case 2:
-		return 0.44
-	case 3:
-		return 0.58
+// halves is the handedness of each half knot among the crossings given, which
+// is what a partly tied knot has to alternate from.
+func halves(cs []Crossing) []int {
+	var out []int
+	for _, c := range cs {
+		if c.Kind == Lay {
+			out = append(out, c.Sign)
+		}
 	}
-	return 1
+	return out
 }
 
-// twists collapses a run of same-handed crossings into one twist, which is
-// what a half knot physically is: the cords wrapping around each other.
+// twists collapses a run of same-handed crossings into one twist, which is what
+// a half knot physically is: the cords wrapping around each other.
 func twists(cs []Crossing) []rope.Twist {
 	var out []rope.Twist
 	for _, c := range cs {

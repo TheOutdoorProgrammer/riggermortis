@@ -133,13 +133,37 @@ type Geometry struct {
 }
 
 type Action struct {
-	Verb      string `yaml:"verb"`
+	Verb string `yaml:"verb"`
+	// Subject is what the verb acts on: one entity or several. Records write
+	// both forms, so it stays untyped here and Subjects normalises it.
+	Subject   any    `yaml:"subject"`
 	Names     string `yaml:"names"`
 	Through   string `yaml:"through"`
 	Chirality string `yaml:"chirality"`
+	// Direction is which way a reeve passes through its loop, "U-D" or "D-U".
+	// It is the sign of the normal the end travels along, and it is the only
+	// thing distinguishing a tuck from the same tuck made backwards.
+	Direction string `yaml:"direction"`
 	Rotation  string `yaml:"rotation"`
 	Force     string `yaml:"force"`
 	Repeat    any    `yaml:"repeat"`
+}
+
+// Subjects normalises the subject to a list. A scalar is a list of one.
+func (a Action) Subjects() []string {
+	switch t := a.Subject.(type) {
+	case string:
+		return []string{t}
+	case []any:
+		out := make([]string, 0, len(t))
+		for _, v := range t {
+			if s, ok := v.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
 }
 
 type Stage struct {
