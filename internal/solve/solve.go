@@ -125,20 +125,13 @@ func repeatCount(v any) int {
 
 // Geometry lays the crossing sequence out, one drawing per stage. Returns nil
 // when there are no crossings: no diagram beats a misleading one.
-// Geometry draws the knot at each stage, growing the weave as it is tied.
-//
-// Stage k shows every crossing introduced up to k, so stepping forward adds a
-// turn to the same rope rather than swapping in a new picture. Returns nil
-// when the actions yield no crossings: no diagram beats a misleading one.
-func Geometry(r *spec.Record) *spec.Geometry {
+// Cords returns the solved 3D cords for each stage, before projection.
+func Cords(r *spec.Record) [][]rope.Cord {
 	k := Read(r)
 	if len(k.Crossings) == 0 {
 		return nil
 	}
-
-	g := &spec.Geometry{Width: width, Height: height, Cords: []string{"a", "b"}}
-	s1, s2, isBend := bendSigns(k.Crossings)
-
+	var out [][]rope.Cord
 	for i, st := range r.Stages {
 		stage := st.ID
 		if stage == 0 {
@@ -153,24 +146,38 @@ func Geometry(r *spec.Record) *spec.Geometry {
 		if len(upto) == 0 {
 			upto = k.Crossings[:1]
 		}
-		tight := k.Tighten > 0 && stage >= k.Tighten
+		out = append(out, buildStage(k, upto, stage))
+	}
+	return out
+}
 
-		var cords []rope.Cord
-		if isBend {
-			cords = rope.BuildBend(s1, s2, len(upto), tight)
-		} else {
-			l := rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
-				Tail: 150, Flare: 40, Stub: 60}
-			cords = rope.Build(l)
+// Geometry draws the knot at each stage, growing the weave as it is tied.
+//
+// Stage k shows every crossing introduced up to k, so stepping forward adds a
+// turn to the same rope rather than swapping in a new picture. Returns nil
+// when the actions yield no crossings: no diagram beats a misleading one.
+func Geometry(r *spec.Record) *spec.Geometry {
+	k := Read(r)
+	if len(k.Crossings) == 0 {
+		return nil
+	}
 
-			// Every stage settles a little so the cord hangs rather than
-			// tracing a perfect helix. The stage that pulls settles hard.
-			settle := rope.Settle{Iterations: 40, Diameter: 30, Tension: 0.12, Stiffness: 0.16}
-			if tight {
-				settle = rope.Settle{Iterations: 160, Diameter: 30, Tension: 0.55, Stiffness: 0.18}
-			}
-			rope.Relax(cords, settle)
+	g := &spec.Geometry{Width: width, Height: height, Cords: []string{"a", "b"}}
+	for i, st := range r.Stages {
+		stage := st.ID
+		if stage == 0 {
+			stage = i + 1
 		}
+		var upto []Crossing
+		for _, c := range k.Crossings {
+			if c.Stage <= stage {
+				upto = append(upto, c)
+			}
+		}
+		if len(upto) == 0 {
+			upto = k.Crossings[:1]
+		}
+		cords := buildStage(k, upto, stage)
 
 		g.Stages = append(g.Stages, spec.StageGeometry{
 			Stage:    stage,
@@ -187,6 +194,29 @@ func bendSigns(cs []Crossing) (s1, s2 int, ok bool) {
 		return 0, 0, false
 	}
 	return cs[0].Sign, cs[2].Sign, true
+}
+
+// buildStage produces the 3D cords for one stage, shared by the SVG path and
+// any other renderer that wants the same curves.
+func buildStage(k Knot, upto []Crossing, stage int) []rope.Cord {
+	s1, s2, isBend := bendSigns(k.Crossings)
+	tight := k.Tighten > 0 && stage >= k.Tighten
+
+	if isBend {
+		return rope.BuildBend(s1, s2, len(upto), tight)
+	}
+
+	cords := rope.Build(rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
+		Tail: 150, Flare: 40, Stub: 60})
+
+	// Every stage settles a little so the cord hangs rather than tracing a
+	// perfect helix. The stage that pulls settles hard.
+	settle := rope.Settle{Iterations: 40, Diameter: 30, Tension: 0.12, Stiffness: 0.16}
+	if tight {
+		settle = rope.Settle{Iterations: 160, Diameter: 30, Tension: 0.55, Stiffness: 0.18}
+	}
+	rope.Relax(cords, settle)
+	return cords
 }
 
 // twists collapses a run of same-handed crossings into one twist, which is
