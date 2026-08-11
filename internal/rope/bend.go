@@ -15,7 +15,7 @@ func BuildBend(s1, s2, n int, tight bool) []Cord {
 	}
 	reef := (s1 < 0) != (s2 < 0)
 
-	var a []wp
+	var a, b []wp
 	switch {
 	case n <= 1:
 		a = bendCross(m)
@@ -23,12 +23,19 @@ func BuildBend(s1, s2, n int, tight bool) []Cord {
 		a = bendHalfKnot(m)
 	case n == 3:
 		a = bendCrossedEnds(m, reef)
-	case tight && reef:
-		a = bendReefFlat(m)
+	case reef:
+		// The clasp is point-symmetric, not mirror-symmetric: mirroring
+		// would land paired crossings on the axis at the same x, where
+		// the left-to-right reading cannot order them.
+		a = bendReefClasp(m, tight)
+		b = bendRotate(a)
 	default:
-		a = bendStacked(m, reef)
+		a = bendStacked(m)
 	}
-	return []Cord{bendCord("a", a), bendCord("b", bendMirror(a))}
+	if b == nil {
+		b = bendMirror(a)
+	}
+	return []Cord{bendCord("a", a), bendCord("b", b)}
 }
 
 // Cord a enters lower left and crosses the other end.
@@ -59,34 +66,47 @@ func bendCrossedEnds(m float64, reef bool) []wp {
 	}
 }
 
-// Both half knots tied, not yet drawn up: a reef's second wrap mirrors the
-// first, a granny's repeats it.
-func bendStacked(m float64, reef bool) []wp {
-	w := []wp{
+// Both half knots tied the same hand, not yet drawn up. Granny only: the
+// reef's stages 4 and 5 are both bendReefClasp, because a vertical stack
+// puts every crossing at the same x and the reading cannot order them.
+func bendStacked(m float64) []wp {
+	return []wp{
 		{-280, 135, 0}, {-110, 100, 0}, {0, 74, 14 * m}, {-70, 34, 0},
 		{0, -2, -14 * m},
+		{-42, -36, 0}, {0, -68, -14 * m}, {-70, -104, 0},
+		{0, -140, 14 * m}, {110, -165, 0}, {230, -180, 0},
 	}
-	if reef {
-		return append(w,
-			wp{42, -36, 0}, wp{0, -68, 14 * m}, wp{70, -104, 0},
-			wp{0, -140, -14 * m}, wp{-110, -165, 0}, wp{-230, -180, 0})
-	}
-	return append(w,
-		wp{-42, -36, 0}, wp{0, -68, -14 * m}, wp{-70, -104, 0},
-		wp{0, -140, 14 * m}, wp{110, -165, 0}, wp{230, -180, 0})
 }
 
-// The seated square knot: each cord a bight, legs through the other bight's
-// eye and home alongside their own standing part. Six alternating crossings.
-func bendReefFlat(m float64) []wp {
-	return []wp{
-		{-240, 22, 0}, {-185, 22, 0}, {-138, 22, 13 * m}, {-85, 22, 0},
-		{-32, 25, 0}, {0, 36, -13 * m}, {32, 47, 0}, {85, 52, 0},
-		{122, 42, 6 * m}, {145, 20, 13 * m}, {152, 0, 0},
-		{145, -20, -13 * m}, {122, -42, -6 * m}, {85, -52, 0},
-		{32, -47, 0}, {0, -36, 13 * m}, {-32, -25, 0}, {-85, -22, 0},
-		{-138, -22, -13 * m}, {-185, -22, 0}, {-240, -22, 0},
+// bendReefClasp seats the square knot: two interlocked bights, each bend
+// collaring the other cord's paired legs, ends home beside their standing
+// parts. Cord a weaves O,U,O,U,O,U left to right; loose opens it up.
+func bendReefClasp(m float64, tight bool) []wp {
+	z := 13 * m
+	w := []wp{
+		{-275, 41, 0}, {-182, 34, 0},
+		{-151, 32, z}, {-105, 31, z}, // standing part over b's bend
+		{-72, 30, 0},
+		{-6, 31, -z}, {44, 55, -z}, // under b's returning leg
+		{77, 58, 0}, {96, 58, 0},
+		{113, 47, z}, {129, 19, z}, // own bend over that leg
+		{144, -6, 0},
+		{150, -19, -z}, {138, -44, -z}, // own bend under b's standing part
+		{116, -56, 0}, {77, -58, 0},
+		{19, -54, z}, {-30, -33, z}, // working end back over it
+		{-72, -30, 0},
+		{-105, -31, -z}, {-151, -32, -z}, // and under b's bend, home
+		{-182, -34, 0}, {-275, -41, 0},
 	}
+	if tight {
+		return w
+	}
+	for i := range w {
+		w[i].x *= 1.08
+		w[i].y *= 1.55
+	}
+	w[0].y, w[len(w)-1].y = 78, -78
+	return w
 }
 
 // bendMirror reflects a path for the second cord: x for side, z so every
@@ -95,6 +115,16 @@ func bendMirror(w []wp) []wp {
 	out := make([]wp, len(w))
 	for i, p := range w {
 		out[i] = wp{-p.x, p.y, -p.z}
+	}
+	return out
+}
+
+// bendRotate spins a path a half turn in the plane for the second cord,
+// keeping z so each crossing keeps its winner.
+func bendRotate(w []wp) []wp {
+	out := make([]wp, len(w))
+	for i, p := range w {
+		out[i] = wp{-p.x, -p.y, p.z}
 	}
 	return out
 }
