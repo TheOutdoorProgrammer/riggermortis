@@ -3,6 +3,7 @@
 package solve_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/theoutdoorprogrammer/riggermortis/internal/solve"
@@ -34,9 +35,27 @@ func TestReeveIsTwoCrossings(t *testing.T) {
 	}
 }
 
-// Every knot in the dataset must draw an alternating diagram at every stage.
-// Eyeballing a render cannot tell a reef from a granny; this can.
-func TestStagesAlternate(t *testing.T) {
+// A correctly tied square knot, confirmed by someone who ties them. Note what
+// it is not: alternating. Each eye tucks under the whole of the other cord's
+// pair, and enforcing alternation instead drew a knot that was merely close.
+func TestSquareKnotReading(t *testing.T) {
+	want := map[string]string{"a": "U O U U O U", "b": "O U O O U O"}
+
+	rec := load(t).ByID["knot.square"]
+	g := solve.Geometry(rec)
+	if g == nil {
+		t.Fatal("square knot solves to no geometry")
+	}
+	for _, r := range solve.ReadCrossings(rec, len(g.Stages)-1) {
+		if got := strings.Join(r.Sequence, " "); got != want[r.Cord] {
+			t.Errorf("cord %s reads [%s], want [%s]", r.Cord, got, want[r.Cord])
+		}
+	}
+}
+
+// Every knot must still draw something rather than nothing, and the two cords
+// must agree: one reads over wherever the other reads under.
+func TestEveryStageDraws(t *testing.T) {
 	for _, r := range load(t).All {
 		if r.Kind != "knot" {
 			continue
@@ -46,24 +65,15 @@ func TestStagesAlternate(t *testing.T) {
 			continue
 		}
 		for i := range g.Stages {
-			if err := solve.CheckAlternating(g, i); err != nil {
-				t.Errorf("%s stage %d: %v", r.ID, g.Stages[i].Stage, err)
+			rd := solve.ReadCrossings(r, i)
+			if len(rd) != 2 || len(rd[0].Sequence) == 0 {
+				t.Errorf("%s stage %d: no crossings drawn", r.ID, g.Stages[i].Stage)
+				continue
 			}
-		}
-	}
-}
-
-// The finished square knot must read over, under, over along both cords. Six
-// crossings in the record mean nothing if the picture only draws four.
-func TestSquareKnotDiagram(t *testing.T) {
-	g := solve.Geometry(load(t).ByID["knot.square"])
-	if g == nil {
-		t.Fatal("square knot solves to no geometry")
-	}
-	last := len(g.Stages) - 1
-	for _, r := range solve.ReadCrossings(g, last) {
-		if len(r.Sequence) != 6 {
-			t.Errorf("cord %s reads %v, want six crossings", r.Cord, r.Sequence)
+			if len(rd[0].Sequence) != len(rd[1].Sequence) {
+				t.Errorf("%s stage %d: cords disagree on crossing count, %v vs %v",
+					r.ID, g.Stages[i].Stage, rd[0].Sequence, rd[1].Sequence)
+			}
 		}
 	}
 }

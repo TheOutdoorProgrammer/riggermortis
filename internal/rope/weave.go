@@ -42,19 +42,22 @@ func (w Weave) Build() []Cord {
 		reach *= 1.1
 	}
 
-	a := Cord{ID: "a", P: bight(mouth, eyeR, reach, lead)}
+	// The eye dives under while the legs ride over, which is what a tuck is. The
+	// first half knot's hand says whose eye goes beneath.
+	lift := d * 0.3
+	if len(w.Signs) > 0 && w.Signs[0] < 0 {
+		lift = -lift
+	}
+	a := Cord{ID: "a", P: bight(mouth, eyeR, reach, lead, lift, -lift*2.5)}
 
-	// The second bight is the first turned half a revolution about the knot's
-	// centre. Mirroring it instead would land the paired crossings at the same
-	// x, where a left-to-right reading cannot put them in order.
+	// A reef is amphichiral: it is its own mirror image, which is exactly what
+	// makes it a reef and not a granny. So its cords are related by an inversion
+	// and not a rotation, and the depth inverts with the position.
 	b := Cord{ID: "b", P: make([]V3, len(a.P))}
 	for i, p := range a.P {
-		b.P[i] = V3{-p.X, -p.Y, p.Z}
+		b.P[i] = V3{-p.X, -p.Y, -p.Z}
 	}
-
-	cords := []Cord{a, b}
-	Alternate(cords, d*0.55, w.Signs)
-	return cords
+	return []Cord{a, b}
 }
 
 // wrap is how far the eye closes around itself. Past half a turn the eye is a
@@ -64,7 +67,7 @@ const wrap = 2.36
 // bight folds a cord into a lasso: two legs opening into a round eye. That eye
 // collars the other cord's paired legs, well outside the other eye and never
 // through it. Threading it instead ties a different knot that looks close.
-func bight(mouth, eyeR, reach, lead float64) []V3 {
+func bight(mouth, eyeR, reach, lead, legZ, arcZ float64) []V3 {
 	cx := reach - eyeR
 	tip := V3{cx + eyeR*math.Cos(wrap), eyeR * math.Sin(wrap), 0}
 	// Travelling the eye with the angle decreasing, so the tangent arriving at
@@ -88,7 +91,20 @@ func bight(mouth, eyeR, reach, lead float64) []V3 {
 	for i := len(in) - 1; i >= 0; i-- {
 		out = append(out, V3{in[i].X, -in[i].Y, in[i].Z})
 	}
+	sink(out, len(in), len(in)+steps-1, legZ, arcZ)
 	return out
+}
+
+// sink puts the eye at one depth and the legs at another. Depth belongs to the
+// section, not to the crossings: the eye tucks under the whole of the other
+// cord's pair rather than weaving between its legs.
+func sink(p []V3, from, to int, legZ, arcZ float64) {
+	const ease = 26
+	for i := range p {
+		d := float64(min(i-from, to-i))
+		f := math.Max(-1, math.Min(1, d/ease))
+		p[i].Z = legZ + (arcZ-legZ)*(f+1)/2
+	}
 }
 
 // run is the straight stretch where a cord's legs lie against each other.

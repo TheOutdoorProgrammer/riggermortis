@@ -97,40 +97,6 @@ func Build(l Layout) []Cord {
 	return []Cord{a, b}
 }
 
-// sampleCR3 walks a Catmull-Rom spline through waypoints, densely enough that
-// crossing detection reads the curve rather than the chords between points.
-func sampleCR3(w []V3, n int) []V3 {
-	at := func(i int) V3 {
-		if i < 0 {
-			return w[0]
-		}
-		if i >= len(w) {
-			return w[len(w)-1]
-		}
-		return w[i]
-	}
-	out := make([]V3, 0, n)
-	segs := len(w) - 1
-	for s := 0; s < segs; s++ {
-		p0, p1, p2, p3 := at(s-1), at(s), at(s+1), at(s+2)
-		steps := n / segs
-		for i := 0; i < steps; i++ {
-			t := float64(i) / float64(steps)
-			t2, t3 := t*t, t*t*t
-			f := func(a, b, c, d float64) float64 {
-				return 0.5 * ((2 * b) + (-a+c)*t +
-					(2*a-5*b+4*c-d)*t2 + (-a+3*b-3*c+d)*t3)
-			}
-			out = append(out, V3{
-				f(p0.X, p1.X, p2.X, p3.X),
-				f(p0.Y, p1.Y, p2.Y, p3.Y),
-				f(p0.Z, p1.Z, p2.Z, p3.Z),
-			})
-		}
-	}
-	return append(out, w[len(w)-1])
-}
-
 // tail runs a straight-ish lead from the axis out to a flared end.
 func tail(x, dx, y0, z0, y1, z1 float64) []V3 {
 	const n = 16
@@ -178,6 +144,54 @@ func Project(cords []Cord, w, h float64) []spec.Segment {
 	return ProjectIn(cords, Frame([][]Cord{cords}), w, h)
 }
 
+// findCuts locates every crossing between cords and records, for each, whether
+// that cord is the one in front.
+func findCuts(pts [][]spec.Point, depth [][]float64) [][]crossing {
+	cuts := make([][]crossing, len(pts))
+	for ci := range pts {
+		for cj := ci + 1; cj < len(pts); cj++ {
+			for i := 0; i+1 < len(pts[ci]); i++ {
+				for j := 0; j+1 < len(pts[cj]); j++ {
+					ti, tj, ok := intersect(pts[ci][i], pts[ci][i+1], pts[cj][j], pts[cj][j+1])
+					if !ok {
+						continue
+					}
+					zi := depth[ci][i] + (depth[ci][i+1]-depth[ci][i])*ti
+					zj := depth[cj][j] + (depth[cj][j+1]-depth[cj][j])*tj
+					cuts[ci] = append(cuts[ci], crossing{i: i, ti: ti, over: zi > zj})
+					cuts[cj] = append(cuts[cj], crossing{i: j, ti: tj, over: zj > zi})
+				}
+			}
+		}
+	}
+	for ci := range cuts {
+		sort.Slice(cuts[ci], func(a, b int) bool { return cuts[ci][a].i < cuts[ci][b].i })
+		cuts[ci] = cluster(cuts[ci])
+	}
+	return cuts
+}
+
+// Reading is the over/under sequence along each cord, in path order. Segments
+// cannot answer this: two crossings a cord passes the same way merge into one
+// piece of rope, and a square knot has exactly that pair.
+func Reading(cords []Cord) [][]bool {
+	pts := make([][]spec.Point, len(cords))
+	depth := make([][]float64, len(cords))
+	for ci, c := range cords {
+		for _, p := range c.P {
+			pts[ci] = append(pts[ci], spec.Point{p.X, p.Y})
+			depth[ci] = append(depth[ci], p.Z)
+		}
+	}
+	out := make([][]bool, len(cords))
+	for ci, cs := range findCuts(pts, depth) {
+		for _, c := range cs {
+			out[ci] = append(out[ci], c.over)
+		}
+	}
+	return out
+}
+
 // ProjectIn projects within a fixed frame.
 func ProjectIn(cords []Cord, box Box, w, h float64) []spec.Segment {
 	pts := make([][]spec.Point, len(cords))
@@ -198,32 +212,12 @@ func ProjectIn(cords []Cord, box Box, w, h float64) []spec.Segment {
 		}
 	}
 
-	// Cut points per cord, as indices where a crossing happens.
-	cuts := make([][]crossing, len(cords))
-	for ci := 0; ci < len(cords); ci++ {
-		for cj := ci + 1; cj < len(cords); cj++ {
-			for i := 0; i+1 < len(pts[ci]); i++ {
-				for j := 0; j+1 < len(pts[cj]); j++ {
-					ti, tj, ok := intersect(pts[ci][i], pts[ci][i+1], pts[cj][j], pts[cj][j+1])
-					if !ok {
-						continue
-					}
-					zi := depth[ci][i] + (depth[ci][i+1]-depth[ci][i])*ti
-					zj := depth[cj][j] + (depth[cj][j+1]-depth[cj][j])*tj
-					cuts[ci] = append(cuts[ci], crossing{i: i, ti: ti, over: zi > zj})
-					cuts[cj] = append(cuts[cj], crossing{i: j, ti: tj, over: zj > zi})
-				}
-			}
-		}
-	}
+	cuts := findCuts(pts, depth)
 
 	var out []spec.Segment
 	const halo = 9 // samples either side of a crossing that share its paint order
 
 	for ci, c := range cords {
-		sort.Slice(cuts[ci], func(a, b int) bool { return cuts[ci][a].i < cuts[ci][b].i })
-		cuts[ci] = cluster(cuts[ci])
-
 		// Paint order per sample: 0 free, 1 behind, 2 in front.
 		order := make([]int, len(pts[ci]))
 		for _, x := range cuts[ci] {

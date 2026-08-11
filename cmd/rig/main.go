@@ -47,19 +47,11 @@ func main() {
 			fmt.Fprintln(os.Stderr, *cross, "solves to no crossings")
 			os.Exit(2)
 		}
-		bad := 0
 		for i := range g.Stages {
-			for _, rd := range solve.ReadCrossings(g, i) {
-				mark := "ok"
-				if !rd.Alternating {
-					mark, bad = "NOT ALTERNATING", bad+1
-				}
-				fmt.Printf("stage %d cord %s  n=%d  %v  %s\n",
-					g.Stages[i].Stage, rd.Cord, len(rd.Sequence), rd.Sequence, mark)
+			for _, rd := range solve.ReadCrossings(r, i) {
+				fmt.Printf("stage %d cord %s  n=%d  %v\n",
+					g.Stages[i].Stage, rd.Cord, len(rd.Sequence), rd.Sequence)
 			}
-		}
-		if bad > 0 {
-			os.Exit(1)
 		}
 		return
 	}

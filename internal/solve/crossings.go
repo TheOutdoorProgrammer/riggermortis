@@ -3,8 +3,7 @@
 package solve
 
 import (
-	"fmt"
-
+	"github.com/theoutdoorprogrammer/riggermortis/internal/rope"
 	"github.com/theoutdoorprogrammer/riggermortis/internal/spec"
 )
 
@@ -15,44 +14,27 @@ type CordReading struct {
 	Alternating bool
 }
 
-// ReadCrossings reports what a rendered stage actually draws. Eyeballing a
-// render cannot tell a reef from a granny; the alternation can.
-func ReadCrossings(g *spec.Geometry, stage int) []CordReading {
-	if g == nil || stage < 0 || stage >= len(g.Stages) {
+// ReadCrossings reports what a stage actually draws. Eyeballing a render cannot
+// tell a reef from a granny; this can.
+func ReadCrossings(r *spec.Record, stage int) []CordReading {
+	all := Cords(r)
+	if stage < 0 || stage >= len(all) {
 		return nil
 	}
 	var out []CordReading
-	for _, cord := range g.Cords {
-		var hits []string
-		for _, s := range g.Stages[stage].Segments {
-			if s.Cord != cord || s.Z == 0 || len(s.Points) == 0 {
-				continue
-			}
+	for ci, seq := range rope.Reading(all[stage]) {
+		cr := CordReading{Cord: all[stage][ci].ID, Alternating: true}
+		for i, over := range seq {
 			z := "U"
-			if s.Z == 2 {
+			if over {
 				z = "O"
 			}
-			hits = append(hits, z)
-		}
-
-		r := CordReading{Cord: cord, Alternating: true}
-		for i, h := range hits {
-			r.Sequence = append(r.Sequence, h)
-			if i > 0 && h == hits[i-1] {
-				r.Alternating = false
+			cr.Sequence = append(cr.Sequence, z)
+			if i > 0 && over == seq[i-1] {
+				cr.Alternating = false
 			}
 		}
-		out = append(out, r)
+		out = append(out, cr)
 	}
 	return out
-}
-
-// CheckAlternating returns an error naming the cord that does not alternate.
-func CheckAlternating(g *spec.Geometry, stage int) error {
-	for _, r := range ReadCrossings(g, stage) {
-		if !r.Alternating {
-			return fmt.Errorf("cord %s does not alternate: %v", r.Cord, r.Sequence)
-		}
-	}
-	return nil
 }
