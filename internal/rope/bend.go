@@ -84,28 +84,34 @@ func bendStacked(m float64) []wp {
 func bendReefClasp(m float64, tight bool) []wp {
 	z := 13 * m
 	w := []wp{
-		{-275, 41, 0}, {-182, 34, 0},
+		{-300, 24, 0}, {-192, 27, 0},
 		{-151, 32, z}, {-105, 31, z}, // standing part over b's bend
-		{-72, 30, 0},
-		{-6, 31, -z}, {44, 55, -z}, // under b's returning leg
-		{77, 58, 0}, {96, 58, 0},
-		{113, 47, z}, {129, 19, z}, // own bend over that leg
-		{144, -6, 0},
-		{150, -19, -z}, {138, -44, -z}, // own bend under b's standing part
-		{116, -56, 0}, {77, -58, 0},
-		{19, -54, z}, {-30, -33, z}, // working end back over it
-		{-72, -30, 0},
+		{-40, 30, 0},
+		{-4, 34, -z}, {30, 52, -z}, // under b's returning leg
+		{62, 60, 0}, {92, 61, 0},
+		{116, 52, z}, {134, 22, z}, // own bend over that leg
+		{140, 0, 0},
+		{134, -22, -z}, {124, -46, -z}, // own bend under b's standing part
+		{112, -60, 0}, {92, -61, 0},
+		{30, -52, z}, {-4, -34, z}, // working end back over it
+		{-40, -30, 0},
 		{-105, -31, -z}, {-151, -32, -z}, // and under b's bend, home
-		{-182, -34, 0}, {-275, -41, 0},
+		{-192, -27, 0}, {-300, -24, 0},
+	}
+	// The reference diagram's core is roughly square; authored flat it reads as
+	// a weave rather than a knot, so pull it in and stand it up.
+	for i := range w {
+		w[i].x *= 0.84
+		w[i].y *= 1.75
 	}
 	if tight {
 		return w
 	}
 	for i := range w {
 		w[i].x *= 1.08
-		w[i].y *= 1.55
+		w[i].y *= 1.30
 	}
-	w[0].y, w[len(w)-1].y = 78, -78
+	w[0].y, w[len(w)-1].y = 62, -62
 	return w
 }
 
