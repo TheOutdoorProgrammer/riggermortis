@@ -144,14 +144,23 @@ func Project(cords []Cord, w, h float64) []spec.Segment {
 	return ProjectIn(cords, Frame([][]Cord{cords}), w, h)
 }
 
-// findCuts locates every crossing between cords and records, for each, whether
-// that cord is the one in front.
+// findCuts records every crossing and which cord is in front. Cords are
+// compared with themselves too: a knot of wraps crosses its own standing part
+// more often than the other line, and skipping that left half of it unresolved.
 func findCuts(pts [][]spec.Point, depth [][]float64) [][]crossing {
+	// Samples this close together along one cord are the same piece of rope
+	// bending, not two parts of it meeting.
+	const selfGap = 12
+
 	cuts := make([][]crossing, len(pts))
 	for ci := range pts {
-		for cj := ci + 1; cj < len(pts); cj++ {
+		for cj := ci; cj < len(pts); cj++ {
 			for i := 0; i+1 < len(pts[ci]); i++ {
-				for j := 0; j+1 < len(pts[cj]); j++ {
+				start := 0
+				if ci == cj {
+					start = i + selfGap
+				}
+				for j := start; j+1 < len(pts[cj]); j++ {
 					ti, tj, ok := intersect(pts[ci][i], pts[ci][i+1], pts[cj][j], pts[cj][j+1])
 					if !ok {
 						continue

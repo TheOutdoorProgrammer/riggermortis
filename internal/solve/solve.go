@@ -46,15 +46,31 @@ type Crossing struct {
 	Kind  Kind
 }
 
+// Barrel is a run of turns taken about a core of more than one part.
+type Barrel struct {
+	Turns int
+	Sign  int
+	Stage int
+}
+
 // Knot is the combinatorial reading of a knot's stages.
 type Knot struct {
 	Crossings []Crossing
 	// Halves is the handedness of each half knot in tying order. Reef is +1
 	// then -1, granny +1 then +1, and that difference is the whole knot.
 	Halves []int
+	// Barrels are the collars of wraps this knot grips with, if any.
+	Barrels []Barrel
+	// Folds counts the ends doubled back on themselves.
+	Folds int
 	// Tighten is the stage at which the knot is drawn seated rather than open.
 	Tighten int
 }
+
+// Coiled reports whether the knot grips with a collar of wraps around a core
+// rather than by interlocking with the other cord. Both lines must do it, or
+// the knot is one line gripping another and not a bend of two equal halves.
+func (k Knot) Coiled() bool { return len(k.Barrels) == 2 && k.Folds == 2 }
 
 // Bights reports whether the half knots cancel, bringing every working end back
 // beside its own standing part. Half knots of one hand stand the knot on edge
@@ -96,12 +112,24 @@ func Read(r *spec.Record) Knot {
 				k.Crossings = append(k.Crossings,
 					Crossing{Sign: s, Stage: stage, Kind: ReeveIn},
 					Crossing{Sign: s, Stage: stage, Kind: ReeveOut})
+			case "MB":
+				if a.Names != "" {
+					loopSign[a.Names] = 1
+				}
+				k.Folds++
 			case "MT":
 				s := 1
 				if a.Rotation == "CCW" {
 					s = -1
 				}
-				for n := 0; n < repeatCount(a.Repeat); n++ {
+				turns := repeatCount(a.Repeat)
+				// A turn taken about more than one part wraps them as a unit.
+				// That is a collar gripping a core, not a twist between two
+				// cords, and it is a different knot and a different shape.
+				if len(a.Around) > 1 {
+					k.Barrels = append(k.Barrels, Barrel{Turns: turns, Sign: s, Stage: stage})
+				}
+				for range turns {
 					k.Crossings = append(k.Crossings, Crossing{Sign: s, Stage: stage, Kind: Lay})
 				}
 			case "MV":
@@ -206,6 +234,21 @@ func buildStage(k Knot, stage int) []rope.Cord {
 	// not come back to their own standing parts and the pair is still just
 	// twisted, so a part-tied knot is a shorter weave and not a cropped one.
 	var cords []rope.Cord
+	switch {
+	case k.Coiled():
+		wraps := 0
+		for _, b := range k.Barrels {
+			if b.Stage <= stage {
+				wraps = b.Turns
+			}
+		}
+		return rope.Barrels{
+			Turns:    wraps,
+			Diameter: diameter,
+			Lead:     lead,
+			Tight:    tight,
+		}.Build()
+	}
 	if k.Bights() && len(done) == len(k.Crossings) {
 		// Bights come out dressed, so there is nothing for physics to do. Tension
 		// does not seat this knot, it flattens the eyes the clasp is made of, and

@@ -147,6 +147,12 @@ type Action struct {
 	Rotation  string `yaml:"rotation"`
 	Force     string `yaml:"force"`
 	Repeat    any    `yaml:"repeat"`
+	// Around is what a turn is taken about. More than one entry means the turn
+	// goes round them together, which is a different knot from one that goes
+	// round each: a uni grips because it wraps the pair as a unit.
+	Around []string `yaml:"around"`
+	// Over is an object a part is passed over, as distinct from through.
+	Over string `yaml:"over"`
 }
 
 // Subjects normalises the subject to a list. A scalar is a list of one.
@@ -171,6 +177,29 @@ type Stage struct {
 	Prose    string   `yaml:"prose"`
 	Notation string   `yaml:"notation"`
 	Actions  []Action `yaml:"actions"`
+	// Expand names a pattern to substitute in place of this stage's actions.
+	Expand *Expand `yaml:"expand"`
+}
+
+// Expand applies a pattern with its parameters bound.
+type Expand struct {
+	Pattern string         `yaml:"pattern"`
+	Count   int            `yaml:"count"`
+	With    map[string]any `yaml:"with"`
+}
+
+type Param struct {
+	Name     string `yaml:"name"`
+	Type     string `yaml:"type"`
+	Required bool   `yaml:"required"`
+}
+
+// Pattern is a procedure authored once and expanded wherever it is used, which
+// is how a knot made of the same move twice avoids saying it twice.
+type Pattern struct {
+	Target string  `yaml:"target"`
+	Params []Param `yaml:"params"`
+	Stages []Stage `yaml:"stages"`
 }
 
 type Validation struct {
@@ -201,8 +230,9 @@ type Record struct {
 	Strength  *Strength  `yaml:"strength"`
 	Diameters []Diameter `yaml:"diameters"`
 
-	Stages   []Stage   `yaml:"stages"`
-	Geometry *Geometry `yaml:"geometry"`
+	Stages   []Stage            `yaml:"stages"`
+	Patterns map[string]Pattern `yaml:"patterns"`
+	Geometry *Geometry          `yaml:"geometry"`
 
 	Nodes []Node `yaml:"nodes"`
 	Edges []Edge `yaml:"edges"`
@@ -248,6 +278,9 @@ func Load(root string) (*Set, error) {
 			return fmt.Errorf("%s: %w", path, err)
 		}
 		r.Path = path
+		if err := r.expand(); err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
 		if prev, dup := set.ByID[r.ID]; dup {
 			return fmt.Errorf("%s: id %q already used by %s", path, r.ID, prev.Path)
 		}
@@ -256,6 +289,95 @@ func Load(root string) (*Set, error) {
 		return nil
 	})
 	return set, err
+}
+
+// expand substitutes every stage that names a pattern with that pattern's
+// stages, parameters bound. Stage ids are renumbered so a reader still counts
+// the steps it is actually shown rather than the steps as authored.
+func (r *Record) expand() error {
+	if len(r.Patterns) == 0 {
+		return nil
+	}
+	var out []Stage
+	for _, st := range r.Stages {
+		if st.Expand == nil {
+			out = append(out, st)
+			continue
+		}
+		p, ok := r.Patterns[st.Expand.Pattern]
+		if !ok {
+			return fmt.Errorf("stage %d: no pattern %q", st.ID, st.Expand.Pattern)
+		}
+		for _, param := range p.Params {
+			if _, bound := st.Expand.With[param.Name]; param.Required && !bound {
+				return fmt.Errorf("pattern %q: %s is required and not bound",
+					st.Expand.Pattern, param.Name)
+			}
+		}
+		n := max(st.Expand.Count, 1)
+		for range n {
+			for _, ps := range p.Stages {
+				out = append(out, bindStage(ps, st.Expand.With))
+			}
+		}
+	}
+	for i := range out {
+		out[i].ID = i + 1
+	}
+	r.Stages = out
+	return nil
+}
+
+func bindStage(s Stage, with map[string]any) Stage {
+	out := s
+	out.Expand = nil
+	out.Prose = bindString(s.Prose, with)
+	out.Notation = bindString(s.Notation, with)
+	out.Actions = make([]Action, len(s.Actions))
+	for i, a := range s.Actions {
+		a.Names = bindString(a.Names, with)
+		a.Through = bindString(a.Through, with)
+		a.Over = bindString(a.Over, with)
+		a.Subject = bindAny(a.Subject, with)
+		a.Repeat = bindAny(a.Repeat, with)
+		// A fresh slice, or the second expansion binds over the first's values
+		// and both halves of the knot come out naming the same cord.
+		around := make([]string, len(a.Around))
+		for j, v := range a.Around {
+			around[j] = bindString(v, with)
+		}
+		a.Around = around
+		out.Actions[i] = a
+	}
+	return out
+}
+
+// bindString substitutes scalar parameters into text. A parameter bound to a
+// list is left alone here; bindAny takes it whole.
+func bindString(s string, with map[string]any) string {
+	for k, v := range with {
+		switch v.(type) {
+		case []any, map[string]any:
+			continue
+		}
+		s = strings.ReplaceAll(s, "{"+k+"}", fmt.Sprint(v))
+	}
+	return s
+}
+
+// bindAny returns the parameter itself when a field is nothing but a
+// placeholder, so a range stays a range instead of becoming its own spelling.
+func bindAny(v any, with map[string]any) any {
+	s, ok := v.(string)
+	if !ok {
+		return v
+	}
+	for k, bound := range with {
+		if s == "{"+k+"}" {
+			return bound
+		}
+	}
+	return bindString(s, with)
 }
 
 // ExpectedKind returns the kind a path's directory implies, and whether the
