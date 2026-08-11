@@ -83,35 +83,36 @@ func bendStacked(m float64) []wp {
 // parts. Cord a weaves O,U,O,U,O,U left to right; loose opens it up.
 func bendReefClasp(m float64, tight bool) []wp {
 	z := 13 * m
+	// A tied reef is round: each cord's pair runs together and its bight is an
+	// arc the other pair passes through. Authored as a rectangle it reads as
+	// two square brackets, which is the "staggered" look.
 	w := []wp{
-		{-300, 24, 0}, {-192, 27, 0},
-		{-151, 32, z}, {-105, 31, z}, // standing part over b's bend
-		{-40, 30, 0},
-		{-4, 34, -z}, {30, 52, -z}, // under b's returning leg
-		{62, 60, 0}, {92, 61, 0},
-		{116, 52, z}, {134, 22, z}, // own bend over that leg
-		{140, 0, 0},
-		{134, -22, -z}, {124, -46, -z}, // own bend under b's standing part
-		{112, -60, 0}, {92, -61, 0},
-		{30, -52, z}, {-4, -34, z}, // working end back over it
-		{-40, -30, 0},
-		{-105, -31, -z}, {-151, -32, -z}, // and under b's bend, home
-		{-192, -27, 0}, {-300, -24, 0},
-	}
-	// The reference diagram's core is roughly square; authored flat it reads as
-	// a weave rather than a knot, so pull it in and stand it up.
-	for i := range w {
-		w[i].x *= 0.84
-		w[i].y *= 1.75
+		{-300, 17, 0}, {-210, 17, 0},
+		{-138, 19, z}, // 1  over b's bight
+		{-84, 23, 0},
+		{-16, 34, z}, // 2
+		{34, 52, 0},
+		{80, 66, z},
+		{124, 58, -z}, // 3
+		{154, 33, 0},
+		{164, 0, 0},
+		{154, -33, 0},
+		{124, -58, -z}, // 4
+		{80, -66, -z},
+		{34, -52, 0},
+		{-16, -34, z}, // 5
+		{-84, -23, 0},
+		{-138, -19, z}, // 6
+		{-210, -17, 0}, {-300, -17, 0},
 	}
 	if tight {
 		return w
 	}
 	for i := range w {
-		w[i].x *= 1.08
-		w[i].y *= 1.30
+		w[i].x *= 1.06
+		w[i].y *= 1.22
 	}
-	w[0].y, w[len(w)-1].y = 62, -62
+	w[0].y, w[len(w)-1].y = 34, -34
 	return w
 }
 

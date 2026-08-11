@@ -163,6 +163,9 @@ func Geometry(r *spec.Record) *spec.Geometry {
 	}
 
 	g := &spec.Geometry{Width: width, Height: height, Cords: []string{"a", "b"}}
+
+	all := Cords(r)
+	frame := rope.Frame(all)
 	for i, st := range r.Stages {
 		stage := st.ID
 		if stage == 0 {
@@ -177,14 +180,22 @@ func Geometry(r *spec.Record) *spec.Geometry {
 		if len(upto) == 0 {
 			upto = k.Crossings[:1]
 		}
-		cords := buildStage(k, upto, stage)
-
 		g.Stages = append(g.Stages, spec.StageGeometry{
 			Stage:    stage,
-			Segments: rope.Project(cords, width, height),
+			Segments: rope.ProjectIn(all[i], frame, width, height),
 		})
 	}
+	for i := range g.Stages {
+		Flip(g, i, squareFlips[r.ID]...)
+	}
 	return g
+}
+
+// squareFlips lists crossings to invert per record, numbered as the diagram
+// labels them. Corrections land here rather than in the path, where one depth
+// moves several crossings and changes how many exist.
+var squareFlips = map[string][]int{
+	"knot.square": {1, 2, 4},
 }
 
 // bendSigns detects two half knots: four crossings in two same-signed pairs.
@@ -203,7 +214,20 @@ func buildStage(k Knot, upto []Crossing, stage int) []rope.Cord {
 	tight := k.Tighten > 0 && stage >= k.Tighten
 
 	if isBend {
-		return rope.BuildBend(s1, s2, len(upto), tight)
+		// One finished knot, traced only as far as the end has reached. Stage
+		// numbers map to how much of the path is threaded.
+		cords := rope.BuildBend(s1, s2, 5, true)
+		if f := threaded(stage); f < 1 {
+			out := make([]rope.Cord, len(cords))
+			for i, c := range cords {
+				out[i] = rope.Partial(c, f)
+			}
+			return out
+		}
+		if !tight {
+			return rope.BuildBend(s1, s2, 4, false)
+		}
+		return cords
 	}
 
 	cords := rope.Build(rope.Layout{Twists: twists(upto), Radius: 26, Pitch: 74,
@@ -217,6 +241,19 @@ func buildStage(k Knot, upto []Crossing, stage int) []rope.Cord {
 	}
 	rope.Relax(cords, settle)
 	return cords
+}
+
+// threaded is how far the working end has travelled by a given stage.
+func threaded(stage int) float64 {
+	switch stage {
+	case 1:
+		return 0.34
+	case 2:
+		return 0.44
+	case 3:
+		return 0.58
+	}
+	return 1
 }
 
 // twists collapses a run of same-handed crossings into one twist, which is
